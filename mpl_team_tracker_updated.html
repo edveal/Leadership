@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MPL System Team — Member Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #1a1a2e; --ink-soft: #4a4a6a; --ink-muted: #8888aa;
+    --paper: #faf8f3; --paper-warm: #f3efe6; --paper-card: #ffffff;
+    --accent: #2d5a8e; --accent-light: #e8f0f8;
+    --accent-warm: #8b3a3a; --accent-warm-light: #f5e8e8;
+    --gold: #c9963a; --gold-light: #fdf3e3;
+    --green: #2d6a4f; --green-light: #e8f4ee;
+    --border: rgba(26,26,46,0.1); --border-strong: rgba(26,26,46,0.2);
+    --radius: 10px; --shadow: 0 2px 12px rgba(26,26,46,0.08);
+    --font-display: 'Playfair Display', Georgia, serif;
+    --font-body: 'DM Sans', system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--font-body); background: var(--paper); color: var(--ink); min-height: 100vh; font-size: 15px; line-height: 1.6; }
+
+  .site-header { background: var(--ink); color: white; padding: 2rem 2.5rem; display: flex; align-items: flex-end; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+  .site-header h1 { font-family: var(--font-display); font-size: 1.9rem; font-weight: 600; letter-spacing: 0.01em; }
+  .site-header .subtitle { font-size: 0.85rem; color: rgba(255,255,255,0.55); font-weight: 300; margin-top: 3px; }
+  .header-meta { font-size: 0.8rem; color: rgba(255,255,255,0.45); text-align: right; }
+
+  .tab-bar { background: var(--paper-warm); border-bottom: 1px solid var(--border); padding: 0 2.5rem; display: flex; overflow-x: auto; }
+  .tab-btn { font-family: var(--font-body); font-size: 0.85rem; font-weight: 500; color: var(--ink-muted); background: none; border: none; border-bottom: 2.5px solid transparent; padding: 0.85rem 1.25rem; cursor: pointer; white-space: nowrap; transition: color 0.15s, border-color 0.15s; letter-spacing: 0.02em; }
+  .tab-btn:hover { color: var(--ink-soft); }
+  .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  .main { padding: 2rem 2.5rem; max-width: 1200px; }
+  .view { display: none; }
+  .view.active { display: block; }
+
+  /* OVERVIEW */
+  .overview-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.25rem; margin-top: 1.5rem; }
+  .member-card { background: var(--paper-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem 1.4rem; cursor: pointer; transition: box-shadow 0.2s, transform 0.15s; position: relative; overflow: hidden; }
+  .member-card:hover { box-shadow: var(--shadow); transform: translateY(-1px); }
+  .member-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; }
+  .member-card.tenured::before { background: var(--accent); }
+  .member-card.new::before { background: var(--gold); }
+  .member-card-header { display: flex; align-items: center; gap: 12px; margin-bottom: 0.85rem; }
+  .avatar { width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-size: 1.05rem; font-weight: 600; flex-shrink: 0; }
+  .avatar.tenured { background: var(--accent-light); color: var(--accent); }
+  .avatar.new { background: var(--gold-light); color: var(--gold); }
+  .member-name { font-weight: 500; font-size: 0.95rem; }
+  .member-role { font-size: 0.78rem; color: var(--ink-muted); margin-top: 1px; }
+  .tenure-badge { display: inline-block; font-size: 0.7rem; font-weight: 500; padding: 2px 8px; border-radius: 20px; margin-bottom: 0.75rem; }
+  .badge-tenured { background: var(--accent-light); color: var(--accent); }
+  .badge-new { background: var(--gold-light); color: #7a5a1a; }
+  .card-preview { font-size: 0.8rem; color: var(--ink-soft); line-height: 1.55; }
+  .card-preview .preview-label { font-weight: 500; color: var(--ink-muted); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 2px; }
+  .card-preview .preview-value { margin-bottom: 0.6rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .card-complete { display: flex; align-items: center; gap: 6px; margin-top: 0.85rem; font-size: 0.75rem; color: var(--ink-muted); }
+  .dot { width: 8px; height: 8px; border-radius: 50%; }
+  .dot.filled { background: var(--green); }
+  .dot.empty { background: var(--border-strong); }
+  .add-member-card { background: none; border: 1.5px dashed var(--border-strong); border-radius: var(--radius); padding: 1.25rem 1.4rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; color: var(--ink-muted); font-family: var(--font-body); font-size: 0.85rem; font-weight: 500; transition: background 0.15s, color 0.15s; min-height: 160px; width: 100%; }
+  .add-member-card:hover { background: var(--paper-warm); color: var(--ink-soft); }
+
+  /* DETAIL */
+  .detail-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap; }
+  .back-btn { background: none; border: 1px solid var(--border-strong); border-radius: 6px; padding: 6px 14px; font-family: var(--font-body); font-size: 0.8rem; cursor: pointer; color: var(--ink-soft); transition: background 0.15s; }
+  .back-btn:hover { background: var(--paper-warm); }
+  .detail-name { font-family: var(--font-display); font-size: 1.6rem; font-weight: 600; }
+  .detail-role-line { font-size: 0.85rem; color: var(--ink-muted); margin-top: 2px; }
+  .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+  @media (max-width: 700px) { .detail-grid { grid-template-columns: 1fr; } }
+  .detail-section { background: var(--paper-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem 1.4rem; }
+  .detail-section.full-width { grid-column: 1 / -1; }
+  .section-title { font-size: 0.72rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.07em; color: var(--ink-muted); margin-bottom: 0.85rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border); }
+  .field-group { margin-bottom: 1rem; }
+  .field-group:last-child { margin-bottom: 0; }
+  .field-label { font-size: 0.78rem; font-weight: 500; color: var(--ink-soft); margin-bottom: 4px; display: block; }
+  textarea, input[type="text"] { width: 100%; font-family: var(--font-body); font-size: 0.88rem; color: var(--ink); background: var(--paper); border: 1px solid var(--border); border-radius: 6px; padding: 8px 10px; resize: vertical; transition: border-color 0.15s; line-height: 1.55; }
+  textarea:focus, input[type="text"]:focus { outline: none; border-color: var(--accent); background: white; }
+  textarea { min-height: 72px; }
+  select { font-family: var(--font-body); font-size: 0.88rem; color: var(--ink); background: var(--paper); border: 1px solid var(--border); border-radius: 6px; padding: 8px 10px; width: 100%; }
+  .save-btn { background: var(--accent); color: white; border: none; border-radius: 6px; padding: 9px 22px; font-family: var(--font-body); font-size: 0.85rem; font-weight: 500; cursor: pointer; transition: background 0.15s; margin-top: 1.25rem; }
+  .save-btn:hover { background: #1e3f6e; }
+  .save-note { font-size: 0.75rem; color: var(--ink-muted); margin-top: 0.5rem; }
+
+  /* QUESTIONS */
+  .questions-intro { font-size: 0.9rem; color: var(--ink-soft); max-width: 640px; margin-bottom: 1.75rem; line-height: 1.7; }
+  .q-category { margin-bottom: 2rem; }
+  .q-category-title { font-family: var(--font-display); font-size: 1.05rem; font-weight: 600; color: var(--ink); margin-bottom: 0.85rem; display: flex; align-items: center; gap: 8px; }
+  .cat-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .q-list { list-style: none; }
+  .q-item { background: var(--paper-card); border: 1px solid var(--border); border-radius: 8px; padding: 0.85rem 1.1rem; margin-bottom: 0.55rem; font-size: 0.88rem; color: var(--ink-soft); display: flex; align-items: flex-start; gap: 10px; transition: background 0.12s; }
+  .q-item:hover { background: var(--paper-warm); }
+  .q-num { font-weight: 500; color: var(--ink-muted); font-size: 0.78rem; min-width: 20px; padding-top: 1px; }
+  .q-context { display: inline-block; font-size: 0.68rem; font-weight: 500; padding: 2px 7px; border-radius: 20px; margin-left: 6px; vertical-align: middle; }
+  .ctx-group { background: var(--accent-light); color: var(--accent); }
+  .ctx-individual { background: var(--green-light); color: var(--green); }
+  .ctx-both { background: var(--gold-light); color: #7a5a1a; }
+
+  /* TEAM NOTES */
+  .notes-area { background: var(--paper-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; margin-top: 1rem; }
+  .notes-area textarea { min-height: 320px; font-size: 0.9rem; background: none; border: none; padding: 0; font-family: var(--font-body); }
+  .notes-area textarea:focus { outline: none; background: none; border: none; }
+
+  /* SECTION HEADER */
+  .section-header { margin-bottom: 0.5rem; }
+  .section-header h2 { font-family: var(--font-display); font-size: 1.25rem; font-weight: 600; }
+  .section-header p { font-size: 0.85rem; color: var(--ink-muted); margin-top: 3px; }
+
+  /* TOAST */
+  .toast { position: fixed; bottom: 2rem; right: 2rem; background: var(--ink); color: white; padding: 10px 18px; border-radius: 8px; font-size: 0.82rem; opacity: 0; transform: translateY(6px); transition: opacity 0.2s, transform 0.2s; pointer-events: none; z-index: 300; }
+  .toast.show { opacity: 1; transform: translateY(0); }
+
+  /* ===== 1-ON-1 TAB ===== */
+  .subtab-bar { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 1.25rem; }
+  .subtab-btn { background: none; border: none; border-bottom: 2px solid transparent; padding: 0.6rem 1.1rem; font-family: var(--font-body); font-size: 0.82rem; font-weight: 500; cursor: pointer; color: var(--ink-muted); transition: color 0.12s, border-color 0.12s; }
+  .subtab-btn:hover { color: var(--ink-soft); }
+  .subtab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .subtab-view { display: none; }
+  .subtab-view.active { display: block; }
+
+  .onone-layout { display: grid; grid-template-columns: 265px 1fr; gap: 1.5rem; margin-top: 0.5rem; }
+  @media (max-width: 820px) { .onone-layout { grid-template-columns: 1fr; } }
+
+  .onone-sidebar { background: var(--paper-card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; display: flex; flex-direction: column; position: sticky; top: 1rem; max-height: 78vh; }
+  .onone-sidebar-header { background: var(--ink); color: white; padding: 0.75rem 1rem; font-size: 0.75rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.07em; }
+  .onone-sidebar-scroll { overflow-y: auto; flex: 1; }
+  .onone-sidebar-scroll::-webkit-scrollbar { width: 4px; }
+  .onone-sidebar-scroll::-webkit-scrollbar-track { background: var(--paper); }
+  .onone-sidebar-scroll::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 2px; }
+
+  .theme-group { border-bottom: 1px solid var(--border); }
+  .theme-header { width: 100%; display: flex; justify-content: space-between; align-items: center; padding: 0.65rem 1rem; text-align: left; background: var(--paper-warm); border: none; cursor: pointer; font-family: var(--font-body); font-size: 0.78rem; font-weight: 500; color: var(--ink-soft); transition: background 0.12s; }
+  .theme-header:hover { background: var(--accent-light); }
+  .theme-arrow { transition: transform 0.2s; font-size: 0.6rem; color: var(--ink-muted); }
+  .theme-arrow.open { transform: rotate(180deg); }
+  .theme-templates { display: none; }
+  .theme-templates.open { display: block; }
+  .tpl-link { display: block; padding: 0.5rem 1rem 0.5rem 1.5rem; font-size: 0.79rem; color: var(--ink-soft); cursor: pointer; border-bottom: 1px solid var(--border); background: none; border-left: none; border-right: none; border-top: none; font-family: var(--font-body); text-align: left; width: 100%; transition: background 0.1s; }
+  .tpl-link:hover { background: var(--accent-light); color: var(--accent); }
+  .tpl-link.active-tpl { background: var(--accent); color: white; font-weight: 500; }
+
+  .onone-workspace { background: var(--paper-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.75rem; min-height: 480px; }
+  .onone-welcome { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 4rem 1rem; color: var(--ink-muted); }
+  .onone-welcome-icon { font-size: 2.8rem; margin-bottom: 1rem; opacity: 0.35; }
+  .onone-welcome h3 { font-family: var(--font-display); font-size: 1.15rem; color: var(--ink-soft); margin-bottom: 0.4rem; }
+  .onone-welcome p { font-size: 0.84rem; max-width: 320px; }
+
+  .onone-meeting { display: none; }
+  .onone-meeting.active { display: block; }
+  .onone-meeting-header { border-bottom: 3px solid var(--accent); padding-bottom: 1rem; margin-bottom: 1.5rem; }
+  .onone-meeting-header h3 { font-family: var(--font-display); font-size: 1.2rem; font-weight: 600; color: var(--ink); }
+  .onone-meta { display: flex; gap: 1rem; margin-top: 0.85rem; flex-wrap: wrap; }
+  .onone-meta-field { display: flex; flex-direction: column; gap: 3px; flex: 1; min-width: 180px; }
+  .onone-meta-field label { font-size: 0.71rem; font-weight: 500; color: var(--ink-muted); text-transform: uppercase; letter-spacing: 0.06em; }
+  .onone-meta-field select, .onone-meta-field input[type="text"] { font-size: 0.85rem; padding: 7px 9px; }
+
+  .q-blocks { display: flex; flex-direction: column; gap: 1rem; margin-top: 1.5rem; }
+  .q-block { background: var(--paper); border: 1px solid var(--border); border-radius: 8px; padding: 1rem 1.1rem; border-left: 3px solid transparent; }
+  .q-block.rapport { border-left-color: var(--gold); }
+  .q-block.recent { border-left-color: var(--accent); }
+  .q-block.deep { border-left-color: var(--green); }
+  .q-block.support { border-left-color: var(--accent-warm); }
+  .q-block-label { font-size: 0.7rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 4px; }
+  .q-block.rapport .q-block-label { color: #7a5a1a; }
+  .q-block.recent .q-block-label { color: var(--accent); }
+  .q-block.deep .q-block-label { color: var(--green); }
+  .q-block.support .q-block-label { color: var(--accent-warm); }
+  .q-block-question { font-size: 0.88rem; color: var(--ink); margin-bottom: 0.65rem; font-weight: 500; }
+  .q-block textarea { min-height: 60px; font-size: 0.85rem; background: white; }
+
+  .onone-actions { display: flex; gap: 0.75rem; margin-top: 1.5rem; flex-wrap: wrap; }
+  .btn-primary { background: var(--accent); color: white; border: none; border-radius: 6px; padding: 9px 20px; font-family: var(--font-body); font-size: 0.85rem; font-weight: 500; cursor: pointer; transition: background 0.15s; }
+  .btn-primary:hover { background: #1e3f6e; }
+  .btn-secondary { background: none; color: var(--ink-soft); border: 1px solid var(--border-strong); border-radius: 6px; padding: 9px 16px; font-family: var(--font-body); font-size: 0.85rem; cursor: pointer; transition: background 0.15s; }
+  .btn-secondary:hover { background: var(--paper-warm); }
+  .btn-danger { background: none; color: #a32d2d; border: 1px solid rgba(163,45,45,0.25); border-radius: 6px; padding: 9px 16px; font-family: var(--font-body); font-size: 0.85rem; cursor: pointer; transition: background 0.15s; }
+  .btn-danger:hover { background: #fcebeb; }
+
+  .onone-summary { display: none; margin-top: 1.5rem; background: var(--paper); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  .onone-summary.visible { display: block; }
+  .summary-header { background: var(--ink); color: white; padding: 0.75rem 1.1rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
+  .summary-header span { font-size: 0.8rem; font-weight: 500; }
+  .summary-btns { display: flex; gap: 0.5rem; }
+  .summary-btn { background: rgba(255,255,255,0.12); color: white; border: 1px solid rgba(255,255,255,0.2); border-radius: 5px; padding: 5px 11px; font-size: 0.75rem; cursor: pointer; font-family: var(--font-body); transition: background 0.12s; }
+  .summary-btn:hover { background: rgba(255,255,255,0.22); }
+  .summary-btn.save-green { background: var(--green); border-color: var(--green); }
+  .summary-btn.save-green:hover { background: #1f4f38; }
+  .summary-output { padding: 1.2rem 1.4rem; font-size: 0.82rem; line-height: 1.7; color: var(--ink-soft); white-space: pre-wrap; font-family: 'Courier New', monospace; max-height: 400px; overflow-y: auto; }
+
+  /* GUIDE */
+  .guide-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-top: 0.5rem; }
+  @media (max-width: 700px) { .guide-grid { grid-template-columns: 1fr; } }
+  .guide-card { background: var(--paper-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem 1.4rem; }
+  .guide-card.full { grid-column: 1 / -1; }
+  .guide-card h3 { font-family: var(--font-display); font-size: 1rem; font-weight: 600; color: var(--accent); margin-bottom: 0.75rem; }
+  .guide-card p, .guide-card li { font-size: 0.86rem; color: var(--ink-soft); line-height: 1.65; }
+  .guide-card ol { padding-left: 1.1rem; }
+  .guide-card ol li { margin-bottom: 0.3rem; }
+  .guide-tip { background: var(--gold-light); border-left: 3px solid var(--gold); border-radius: 0 6px 6px 0; padding: 0.7rem 1rem; margin-top: 0.75rem; font-size: 0.82rem; color: var(--ink-soft); }
+  .guide-not { background: var(--accent-warm-light); border-left: 3px solid var(--accent-warm); border-radius: 0 6px 6px 0; padding: 0.7rem 1rem; margin-bottom: 0.6rem; font-size: 0.82rem; color: var(--ink-soft); }
+  .guide-is { background: var(--green-light); border-left: 3px solid var(--green); border-radius: 0 6px 6px 0; padding: 0.7rem 1rem; font-size: 0.82rem; color: var(--ink-soft); }
+  .guide-3col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-top: 0.75rem; }
+  @media (max-width: 700px) { .guide-3col { grid-template-columns: 1fr; } }
+  .guide-3col h4 { font-size: 0.82rem; font-weight: 500; color: var(--ink); margin-bottom: 0.3rem; }
+  .guide-3col p { font-size: 0.8rem; color: var(--ink-soft); }
+
+  /* HISTORY */
+  .hist-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1rem; margin-top: 0.75rem; }
+  .hist-card { background: var(--paper-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem 1.2rem; }
+  .hist-card-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.3rem; }
+  .hist-name { font-weight: 500; font-size: 0.9rem; color: var(--ink); }
+  .hist-date { font-size: 0.71rem; color: var(--ink-muted); background: var(--paper-warm); padding: 2px 8px; border-radius: 20px; white-space: nowrap; }
+  .hist-tpl { font-size: 0.78rem; color: var(--ink-muted); margin-bottom: 0.65rem; }
+  .hist-actions { display: flex; justify-content: flex-end; gap: 0.75rem; border-top: 1px solid var(--border); padding-top: 0.6rem; }
+  .hist-actions button { background: none; border: none; font-family: var(--font-body); font-size: 0.78rem; cursor: pointer; font-weight: 500; }
+  .hist-view-btn { color: var(--accent); }
+  .hist-view-btn:hover { text-decoration: underline; }
+  .hist-del-btn { color: #a32d2d; }
+  .hist-del-btn:hover { text-decoration: underline; }
+  .empty-state { text-align: center; padding: 3rem 1rem; color: var(--ink-muted); font-size: 0.88rem; }
+
+  /* MODAL */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(26,26,46,0.55); z-index: 200; align-items: center; justify-content: center; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--paper-card); border-radius: var(--radius); padding: 1.75rem; max-width: 580px; width: 92%; max-height: 82vh; overflow-y: auto; }
+  .modal h3 { font-family: var(--font-display); font-size: 1.1rem; margin-bottom: 0.5rem; }
+  .modal-meta { font-size: 0.8rem; color: var(--ink-muted); margin-bottom: 0.85rem; }
+  .modal-body { font-size: 0.82rem; color: var(--ink-soft); white-space: pre-wrap; font-family: 'Courier New', monospace; line-height: 1.7; background: var(--paper); border-radius: 6px; padding: 1rem; max-height: 340px; overflow-y: auto; }
+  .modal-close { margin-top: 1rem; }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div>
+    <h1>McKinney Public Library</h1>
+    <div class="subtitle">System Team — Member Tracker &amp; Onboarding Notes</div>
+  </div>
+  <div class="header-meta" id="lastSaved">Not yet saved</div>
+</header>
+
+<nav class="tab-bar">
+  <button class="tab-btn active" onclick="showView('overview')">Team Overview</button>
+  <button class="tab-btn" onclick="showView('questions')">Ice Breaker Questions</button>
+  <button class="tab-btn" onclick="showView('1on1')">1-on-1 Meetings</button>
+  <button class="tab-btn" onclick="showView('notes')">Team Notes</button>
+</nav>
+
+<div class="main">
+
+  <!-- OVERVIEW -->
+  <div id="view-overview" class="view active">
+    <div class="section-header"><h2>Team Members</h2><p>Click any card to view and edit notes for that member.</p></div>
+    <div class="overview-grid" id="teamGrid"></div>
+  </div>
+
+  <!-- MEMBER DETAIL -->
+  <div id="view-detail" class="view">
+    <div class="detail-header">
+      <button class="back-btn" onclick="showView('overview')">← Back</button>
+      <div><div class="detail-name" id="detail-name"></div><div class="detail-role-line" id="detail-role-line"></div></div>
+    </div>
+    <div class="detail-grid">
+      <div class="detail-section">
+        <div class="section-title">Basic Info</div>
+        <div class="field-group"><label class="field-label">Name</label><input type="text" id="d-name" placeholder="Full name"></div>
+        <div class="field-group"><label class="field-label">Job Title / Role</label><input type="text" id="d-role" placeholder="e.g. Circulation Specialist"></div>
+        <div class="field-group"><label class="field-label">Tenure Status</label>
+          <select id="d-tenure"><option value="tenured">Tenured (1+ year)</option><option value="new">New Employee (&lt; 2 months)</option></select>
+        </div>
+        <div class="field-group"><label class="field-label">Start Date at MPL</label><input type="text" id="d-startdate" placeholder="e.g. March 2024"></div>
+      </div>
+      <div class="detail-section">
+        <div class="section-title">Skills &amp; Strengths</div>
+        <div class="field-group"><label class="field-label">Known skills / areas of expertise</label><textarea id="d-skills" placeholder="What do they excel at? Any technical skills, systems knowledge, etc."></textarea></div>
+        <div class="field-group"><label class="field-label">Hidden talents or surprises</label><textarea id="d-talents" placeholder="Things that came up in ice breakers or one-on-ones..."></textarea></div>
+        <div class="field-group"><label class="field-label">Natural team role</label><input type="text" id="d-teamrole" placeholder="e.g. problem-solver, communicator, organizer"></div>
+      </div>
+      <div class="detail-section">
+        <div class="section-title">Professional Goals</div>
+        <div class="field-group"><label class="field-label">2–3 year professional goals</label><textarea id="d-goals" placeholder="Where do they want to be?"></textarea></div>
+        <div class="field-group"><label class="field-label">Skills they want to develop</label><textarea id="d-develop" placeholder="What have they wanted to learn but haven't had a chance to?"></textarea></div>
+        <div class="field-group"><label class="field-label">What a "win" looks like for them on this team</label><textarea id="d-win" placeholder="Their personal definition of success here..."></textarea></div>
+      </div>
+      <div class="detail-section">
+        <div class="section-title">Working Style &amp; Culture Fit</div>
+        <div class="field-group"><label class="field-label">Feedback preference</label><input type="text" id="d-feedback" placeholder="Direct/quick vs. contextualized/discussed"></div>
+        <div class="field-group"><label class="field-label">What makes them feel valued at work</label><textarea id="d-valued" placeholder="Recognition style, autonomy, collaboration, etc."></textarea></div>
+        <div class="field-group"><label class="field-label">Why they work at a public library</label><textarea id="d-why" placeholder="Their motivations and connection to public service..."></textarea></div>
+      </div>
+      <div class="detail-section full-width">
+        <div class="section-title">Free Notes &amp; Observations</div>
+        <div class="field-group"><label class="field-label">One-on-one notes</label><textarea id="d-1on1" placeholder="Notes from individual conversations..." style="min-height:90px;"></textarea></div>
+        <div class="field-group"><label class="field-label">Team session observations</label><textarea id="d-teamobs" placeholder="How they interact in group settings, ice breaker responses, etc..." style="min-height:90px;"></textarea></div>
+        <div class="field-group"><label class="field-label">Action items / follow-ups</label><textarea id="d-actions" placeholder="Things to circle back on, introductions to make, resources to share..."></textarea></div>
+      </div>
+    </div>
+    <button class="save-btn" onclick="saveMember()">Save Member Notes</button>
+    <div class="save-note">All data is saved in your browser's local storage — no account needed.</div>
+  </div>
+
+  <!-- QUESTIONS -->
+  <div id="view-questions" class="view">
+    <p class="questions-intro">These questions are designed for your System Team onboarding at MPL. Use the context tags to guide when to use each one.
+      <span style="display:inline-flex;align-items:center;gap:5px;margin-left:4px;">
+        <span class="q-context ctx-group">Group</span><span class="q-context ctx-individual">1-on-1</span><span class="q-context ctx-both">Both</span>
+      </span>
+    </p>
+    <div class="q-category">
+      <div class="q-category-title"><span class="cat-dot" style="background:#2d5a8e;"></span>Skills &amp; Strengths</div>
+      <ul class="q-list">
+        <li class="q-item"><span class="q-num">1</span><span>What's a task at work where you feel most "in your element"? <span class="q-context ctx-both">Both</span></span></li>
+        <li class="q-item"><span class="q-num">2</span><span>What's something you know how to do that most people would be surprised by? <span class="q-context ctx-group">Group</span></span></li>
+        <li class="q-item"><span class="q-num">3</span><span>If our team was stuck on a tough problem, what role would you naturally fall into — researcher, idea generator, organizer, executor? <span class="q-context ctx-both">Both</span></span></li>
+        <li class="q-item"><span class="q-num">4</span><span>What tools, systems, or workflows have you become the go-to person for — either here or at a previous job? <span class="q-context ctx-individual">1-on-1</span></span></li>
+        <li class="q-item"><span class="q-num">5</span><span>Is there a project or task type you've always wanted to take the lead on? <span class="q-context ctx-individual">1-on-1</span></span></li>
+      </ul>
+    </div>
+    <div class="q-category">
+      <div class="q-category-title"><span class="cat-dot" style="background:#c9963a;"></span>Professional Goals</div>
+      <ul class="q-list">
+        <li class="q-item"><span class="q-num">6</span><span>Where do you hope to be professionally in 2–3 years? <span class="q-context ctx-individual">1-on-1</span></span></li>
+        <li class="q-item"><span class="q-num">7</span><span>What's one skill you've been wanting to develop but haven't had the chance to yet? <span class="q-context ctx-individual">1-on-1</span></span></li>
+        <li class="q-item"><span class="q-num">8</span><span>Is there a type of project or responsibility you've never had but would love to try? <span class="q-context ctx-individual">1-on-1</span></span></li>
+        <li class="q-item"><span class="q-num">9</span><span>What does a personal "win" look like for you on this team? <span class="q-context ctx-individual">1-on-1</span></span></li>
+        <li class="q-item"><span class="q-num">10</span><span>If you could add one thing to your resume by the end of the year, what would it be? <span class="q-context ctx-individual">1-on-1</span></span></li>
+      </ul>
+    </div>
+    <div class="q-category">
+      <div class="q-category-title"><span class="cat-dot" style="background:#2d6a4f;"></span>Team &amp; MPL Culture</div>
+      <ul class="q-list">
+        <li class="q-item"><span class="q-num">11</span><span>What made you want to work at a public library specifically? <span class="q-context ctx-both">Both</span></span></li>
+        <li class="q-item"><span class="q-num">12</span><span>What's something a previous team did really well that you'd love to bring here? <span class="q-context ctx-both">Both</span></span></li>
+        <li class="q-item"><span class="q-num">13</span><span>How do you prefer to receive feedback — direct and quick, or with context and a lead-up conversation? <span class="q-context ctx-individual">1-on-1</span></span></li>
+        <li class="q-item"><span class="q-num">14</span><span>What's one thing that makes you feel genuinely valued at work? <span class="q-context ctx-individual">1-on-1</span></span></li>
+        <li class="q-item"><span class="q-num">15</span><span>What do you think makes a library system team different from other teams at MPL? <span class="q-context ctx-group">Group</span></span></li>
+      </ul>
+    </div>
+    <div class="q-category">
+      <div class="q-category-title"><span class="cat-dot" style="background:#8b3a3a;"></span>Ice Breakers</div>
+      <ul class="q-list">
+        <li class="q-item"><span class="q-num">16</span><span>What's a book, show, podcast, or hobby you'd recommend to everyone on this team? <span class="q-context ctx-group">Group</span></span></li>
+        <li class="q-item"><span class="q-num">17</span><span>If you could swap jobs with anyone at MPL for one week, who would it be and why? <span class="q-context ctx-group">Group</span></span></li>
+        <li class="q-item"><span class="q-num">18</span><span>What's something you were nervous or unsure about when you first started here? <span class="q-context ctx-group">Group</span></span></li>
+        <li class="q-item"><span class="q-num">19</span><span>What's the most interesting patron interaction or library moment you've witnessed? <span class="q-context ctx-group">Group</span></span></li>
+        <li class="q-item"><span class="q-num">20</span><span>If this team had a name — like a sports team or a band — what would you call us? <span class="q-context ctx-group">Group</span></span></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- 1-ON-1 MEETINGS -->
+  <div id="view-1on1" class="view">
+    <div class="section-header" style="margin-bottom:1rem;">
+      <h2>1-on-1 Meetings</h2>
+      <p>Structured conversation templates with live note-taking, auto-summary, and full meeting history.</p>
+    </div>
+    <div class="subtab-bar">
+      <button class="subtab-btn active" onclick="showSubtab('conduct')">Conduct Meeting</button>
+      <button class="subtab-btn" onclick="showSubtab('guide')">Guide &amp; Best Practices</button>
+      <button class="subtab-btn" onclick="showSubtab('history')">Meeting History</button>
+    </div>
+
+    <!-- CONDUCT -->
+    <div id="subtab-conduct" class="subtab-view active">
+      <div class="onone-layout">
+        <div class="onone-sidebar">
+          <div class="onone-sidebar-header">Select a Template</div>
+          <div class="onone-sidebar-scroll" id="onone-tpl-list"></div>
+        </div>
+        <div class="onone-workspace" id="onone-workspace">
+          <div class="onone-welcome" id="onone-welcome">
+            <div class="onone-welcome-icon">📋</div>
+            <h3>Ready when you are</h3>
+            <p>Choose a template from the sidebar to load the framework and begin taking notes.</p>
+          </div>
+          <div class="onone-meeting" id="onone-meeting">
+            <div class="onone-meeting-header">
+              <h3 id="onone-title"></h3>
+              <div class="onone-meta">
+                <div class="onone-meta-field">
+                  <label>Team Member</label>
+                  <select id="onone-member-select"></select>
+                </div>
+                <div class="onone-meta-field">
+                  <label>Date</label>
+                  <input type="text" id="onone-date" placeholder="e.g. April 6, 2026">
+                </div>
+              </div>
+            </div>
+            <div class="q-blocks" id="onone-q-blocks"></div>
+            <div class="onone-actions">
+              <button class="btn-primary" onclick="generateSummary()">Complete &amp; Review Summary</button>
+              <button class="btn-secondary" onclick="clearMeeting()">Clear Notes</button>
+            </div>
+            <div class="onone-summary" id="onone-summary">
+              <div class="summary-header">
+                <span>Meeting Summary</span>
+                <div class="summary-btns">
+                  <button class="summary-btn save-green" id="onone-save-btn" onclick="saveMeetingToHistory()">Save to History</button>
+                  <button class="summary-btn" onclick="copyMeetingSummary()">Copy</button>
+                  <button class="summary-btn" onclick="printMeetingSummary()">Print</button>
+                </div>
+              </div>
+              <div class="summary-output" id="onone-summary-output"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- GUIDE -->
+    <div id="subtab-guide" class="subtab-view">
+      <div class="guide-grid">
+        <div class="guide-card">
+          <h3>The "Why" — The Golden Rule</h3>
+          <p style="margin-bottom:0.75rem;">This is <em>their</em> meeting, not yours. Your job is to listen, guide, and support — not to report out or manage tasks.</p>
+          <div class="guide-not"><strong style="color:#7a2020;">NOT a 1-on-1:</strong> Status updates, project check-ins, or one-way communication from manager to employee.</div>
+          <div class="guide-is"><strong style="color:#1f4f38;">IS a 1-on-1:</strong> Coaching, career development, trust-building, and genuine two-way dialogue.</div>
+        </div>
+        <div class="guide-card">
+          <h3>The "How" — Four-Part Structure</h3>
+          <p style="margin-bottom:0.75rem;">Each template follows this ~30-minute framework:</p>
+          <ol>
+            <li><strong>Rapport (5 min):</strong> Human connection before business.</li>
+            <li><strong>Recent Work (10 min):</strong> Specific praise and a progress check.</li>
+            <li><strong>Deep Dive (10 min):</strong> Focus on a theme — growth, culture, feedback, well-being.</li>
+            <li><strong>Manager Support (5 min):</strong> Close by asking how you can help them.</li>
+          </ol>
+          <div class="guide-tip"><strong>Pro tip:</strong> Aim for an 80/20 split. The employee should be talking 80% of the time. Ask open questions and sit with silences.</div>
+        </div>
+        <div class="guide-card full">
+          <h3>Navigating Tough Conversations</h3>
+          <div class="guide-3col">
+            <div>
+              <h4>Constructive Feedback</h4>
+              <p>Use SBI: <em>Situation</em> ("On Tuesday..."), <em>Behavior</em> ("...you cut someone off..."), <em>Impact</em> ("...which derailed the discussion"). Keep it factual and specific — never personal.</p>
+            </div>
+            <div>
+              <h4>Signs of Disengagement</h4>
+              <p>Acknowledge it openly and without blame: "I've noticed you've seemed quieter lately — is everything okay?" Opening the door gently is far more effective than waiting for them to come to you.</p>
+            </div>
+            <div>
+              <h4>Receiving Upward Feedback</h4>
+              <p>When you ask what you could do better as a manager, your only job is to truly listen. Say "Thank you — I appreciate you telling me that." Never explain or get defensive in the moment.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- HISTORY -->
+    <div id="subtab-history" class="subtab-view">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:0.5rem;">
+        <p style="font-size:0.84rem;color:var(--ink-muted);">Your saved 1-on-1 meetings, stored in this browser.</p>
+        <button class="btn-danger" onclick="clearAllHistory()">Clear All History</button>
+      </div>
+      <div class="hist-grid" id="onone-hist-grid"></div>
+      <div class="empty-state" id="onone-empty-state" style="display:none;">
+        <div style="font-size:2.5rem;opacity:0.3;margin-bottom:0.5rem;">📂</div>
+        <p>No saved meetings yet. Complete a 1-on-1 and click "Save to History".</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- TEAM NOTES -->
+  <div id="view-notes" class="view">
+    <div class="section-header"><h2>Team Notes</h2><p>A scratchpad for team-wide observations, patterns, and planning notes.</p></div>
+    <div class="notes-area"><textarea id="teamNotes" placeholder="Overall team dynamics, patterns you're noticing, planning notes, things to bring up at your first team meeting..."></textarea></div>
+    <button class="save-btn" onclick="saveTeamNotes()">Save Notes</button>
+    <div class="save-note">Saved in your browser's local storage.</div>
+  </div>
+
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="hist-modal">
+  <div class="modal">
+    <h3 id="modal-title"></h3>
+    <div class="modal-meta" id="modal-meta"></div>
+    <div class="modal-body" id="modal-body"></div>
+    <button class="btn-secondary modal-close" onclick="document.getElementById('hist-modal').classList.remove('open')">Close</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ===== DATA =====
+const DEFAULT_MEMBERS = [
+  { id: 'member1', name: 'Team Member 1', role: 'Add role...', tenure: 'tenured' },
+  { id: 'member2', name: 'Team Member 2', role: 'Add role...', tenure: 'tenured' },
+  { id: 'member3', name: 'Team Member 3', role: 'Add role...', tenure: 'new' },
+  { id: 'member4', name: 'Team Member 4', role: 'Add role...', tenure: 'new' },
+];
+const FIELDS = ['name','role','tenure','startdate','skills','talents','teamrole','goals','develop','win','feedback','valued','why','1on1','teamobs','actions'];
+let currentMemberId = null;
+let currentSummaryData = null;
+
+const TEMPLATES = [
+  { theme: 'Theme 1: Foundational Check-ins', items: [
+    { title: 'The Standard Check-in', q: [['Rapport','How are you? How is life outside of work?'],['Recent Work','How is your current project going? What could we do to make it better?'],['Deep Dive','Is there anything blocking you from getting your work done?'],['Manager Support','How can I better support you?']] },
+    { title: 'Productivity & Work Habits', q: [['Rapport','What part of the day do you have the most energy and focus?'],['Recent Work','What part of your work routine is working best? What area do you want to improve?'],['Deep Dive','How many hours a day do you feel you\'re truly productive? How could we change that?'],['Manager Support','Are there any meetings or discussions you feel you should be part of but aren\'t?']] },
+    { title: 'Project Deep Dive & Clarity', q: [['Rapport','What worries you right now?'],['Recent Work','Let\'s walk through your current project. Is any part of it unclear or confusing?'],['Deep Dive','Are there any projects you\'d really like to work on if given the opportunity?'],['Manager Support','Is there an aspect of your job you would like more coaching on?']] }
+  ]},
+  { theme: 'Theme 2: Growth & Development', items: [
+    { title: 'Career Growth & Aspirations', q: [['Rapport','What did you do for fun in the past that you haven\'t had as much time for lately?'],['Recent Work','What work here feels most aligned with your long-term goals?'],['Deep Dive','What do you want to be doing in 5 years? 10 years?'],['Manager Support','What\'s one thing we could do today to help you with your long-term goals?']] },
+    { title: 'Skill Development & Learning', q: [['Rapport','How are you feeling this week?'],['Recent Work','Do you feel challenged at work? Are you learning new things?'],['Deep Dive','What skills would you like to develop right now? What training would you like?'],['Manager Support','Who at MPL would you like to learn from? I can help make an introduction.']] },
+    { title: 'Long-Term Goals & Dreams', q: [['Rapport','As a kid, what did you want to be when you grew up?'],['Recent Work','Do you feel like you\'re making progress on your bigger goals here? Why or why not?'],['Deep Dive','What are your big dreams in life? Are you making progress on them?'],['Manager Support','How can I help you align your work here with your big dreams?']] },
+    { title: 'Identifying Superpowers', q: [['Rapport','If you had complete financial freedom, what would you do every day?'],['Recent Work','What was a recent situation you wish you\'d handled differently? What would you change?'],['Deep Dive','What are your superpowers at work? What powers would you like to develop further?'],['Manager Support','How can I help you use your superpowers more often in your role here?']] },
+    { title: 'Unlocking Potential', q: [['Rapport','What three people do you admire most? Why?'],['Recent Work','What did you accomplish recently that you\'re most proud of?'],['Deep Dive','Could you see yourself making progress on more of your goals here? What would need to change?'],['Manager Support','Is there a situation you\'d like my help with?']] }
+  ]},
+  { theme: 'Theme 3: Performance & Feedback', items: [
+    { title: 'Praise & Constructive Feedback', q: [['Rapport','What\'s on your mind?'],['Recent Work','I really liked how you handled [specific task]. (Deliver specific praise here.)'],['Deep Dive','On [another recent task], have you considered [suggestion]? (5–10 min constructive coaching.)'],['Manager Support','What\'s something I could do better? What\'s a criticism you have for me?']] },
+    { title: 'Recognizing the Unsung Hero', q: [['Rapport','How are things going outside of work?'],['Recent Work','I\'ve noticed you\'ve been doing [specific overlooked task]. Thank you — it doesn\'t go unnoticed.'],['Deep Dive','What\'s something you feel is undervalued that you contribute to the team?'],['Manager Support','What could I do to make you enjoy your work more?']] },
+    { title: 'Self-Awareness & Improvement', q: [['Rapport','What are the key skills for your role? How would you rate yourself on each one?'],['Recent Work','Do you feel you\'re getting enough feedback?'],['Deep Dive','What\'s a recent situation you wish you\'d handled differently? What would you change?'],['Manager Support','What do you need from me to help you improve in the areas we discussed?']] }
+  ]},
+  { theme: 'Theme 4: Team & Culture', items: [
+    { title: 'Team Dynamics & Collaboration', q: [['Rapport','What\'s been on your mind lately?'],['Recent Work','How could you improve how you work with the team or others at MPL?'],['Deep Dive','Who on the team do you have the most difficulty working with? Why?'],['Manager Support','Is there a situation you\'d like my help navigating?']] },
+    { title: 'Big Picture & MPL Improvement', q: [['Rapport','What are your hobbies and interests outside of work?'],['Recent Work','What are the biggest time wasters for you each week?'],['Deep Dive','If you were the Library Director, what\'s the first thing you\'d change?'],['Manager Support','Would you like more or less direction from me on your work?']] },
+    { title: 'Culture Conversation', q: [['Rapport','Who are you friends with at work?'],['Recent Work','Do you feel your ideas are heard by the team and by me?'],['Deep Dive','Are there aspects of our culture you wish you could change?'],['Manager Support','What do you like about my management style? What do you dislike?']] },
+    { title: 'Innovation & Idea Generation', q: [['Rapport','When you have a creative idea, what do you do with it?'],['Recent Work','What\'s something about how we do things that you think could be done better?'],['Deep Dive','What\'s one thing we\'d be crazy not to do this quarter to improve the System Team?'],['Manager Support','What could I do to help you bring one of your ideas to life?']] },
+    { title: 'Team Health Check', q: [['Rapport','How well do you feel like you relate to your coworkers?'],['Recent Work','Is everyone pulling their weight on the team?'],['Deep Dive','Who is doing exceptional work on the team? What have they done we should recognize?'],['Manager Support','How could we improve how our team works together?']] }
+  ]},
+  { theme: 'Theme 5: Well-being & Satisfaction', items: [
+    { title: 'Motivation & Purpose', q: [['Rapport','What drives you? What motivates you to come to work each day?'],['Recent Work','I want you to know your work on [project] matters because... (Explain the impact.)'],['Deep Dive','When was the time you enjoyed working here the most?'],['Manager Support','How can I help you be happier at work?']] },
+    { title: 'Work-Life Balance', q: [['Rapport','How do you feel your work/life balance is right now?'],['Recent Work','Do you feel over-worked, under-worked, or just the right workload?'],['Deep Dive','What\'s one thing we could change about work that would improve your personal life?'],['Manager Support','What could I do as your manager to make your work easier?']] },
+    { title: 'Happiness & Job Satisfaction', q: [['Rapport','Are you happy?'],['Recent Work','Are you happy with your recent work? Why or why not?'],['Deep Dive','What\'s not fun about working here? What do you enjoy most?'],['Manager Support','What\'s one thing we can do to help you enjoy your job more?']] },
+    { title: 'Future-Proofing & Retention', q: [['Rapport','How do you feel about your current compensation and benefits?'],['Recent Work','Do you feel we\'re helping you advance your career at a pace you\'d like?'],['Deep Dive','What would convince you to leave for a job somewhere else?'],['Manager Support','What can I do to ensure you feel this is the best place for you to grow?']] },
+    { title: 'Role Alignment & Satisfaction', q: [['Rapport','What makes you excited and motivated to work on a project?'],['Recent Work','Is your job what you expected when you accepted it?'],['Deep Dive','What part of your job do you wish you didn\'t have to do?'],['Manager Support','What would you like to know about me?']] }
+  ]}
+];
+
+const TYPE_CLS = { 'Rapport': 'rapport', 'Recent Work': 'recent', 'Deep Dive': 'deep', 'Manager Support': 'support' };
+
+// ===== MEMBER HELPERS =====
+function getMemberData(id) { const r = localStorage.getItem('mpl_member_' + id); return r ? JSON.parse(r) : null; }
+function getAllMembers() { const r = localStorage.getItem('mpl_members_list'); return r ? JSON.parse(r) : DEFAULT_MEMBERS.map(m => ({...m})); }
+function saveMemberList(list) { localStorage.setItem('mpl_members_list', JSON.stringify(list)); }
+function initMembers() { if (!localStorage.getItem('mpl_members_list')) saveMemberList(DEFAULT_MEMBERS); }
+function getInitials(name) { return name.split(' ').filter(Boolean).slice(0,2).map(w=>w[0]).join('').toUpperCase() || '?'; }
+
+// ===== OVERVIEW =====
+function renderOverview() {
+  const grid = document.getElementById('teamGrid');
+  grid.innerHTML = '';
+  getAllMembers().forEach(m => {
+    const data = getMemberData(m.id) || {};
+    const tenure = data.tenure || m.tenure;
+    const name = data.name || m.name;
+    const role = data.role || m.role;
+    const filled = FIELDS.filter(f => !['name','role','tenure'].includes(f) && (data[f]||'').trim()).length;
+    const total = FIELDS.length - 3;
+    const dots = Array.from({length:Math.min(total,10)},(_,i)=>`<span class="dot ${i<filled?'filled':'empty'}"></span>`).join('');
+    const card = document.createElement('div');
+    card.className = 'member-card ' + tenure;
+    card.onclick = () => openMember(m.id);
+    card.innerHTML = `
+      <div class="member-card-header"><div class="avatar ${tenure}">${getInitials(name)}</div><div><div class="member-name">${name}</div><div class="member-role">${role}</div></div></div>
+      <span class="tenure-badge ${tenure==='tenured'?'badge-tenured':'badge-new'}">${tenure==='tenured'?'Tenured (1+ year)':'New Employee'}</span>
+      <div class="card-preview">
+        ${data.skills?`<div class="preview-label">Skills</div><div class="preview-value">${data.skills}</div>`:''}
+        ${data.goals?`<div class="preview-label">Goals</div><div class="preview-value">${data.goals}</div>`:''}
+        ${!data.skills&&!data.goals?'<span style="color:var(--ink-muted);font-size:0.8rem;font-style:italic;">No notes yet — click to add</span>':''}
+      </div>
+      <div class="card-complete">${dots}<span style="margin-left:4px;">${filled}/${total} fields filled</span></div>`;
+    grid.appendChild(card);
+  });
+  const add = document.createElement('button');
+  add.className = 'add-member-card';
+  add.onclick = addMember;
+  add.innerHTML = `<span style="font-size:1.4rem;">+</span> Add team member`;
+  grid.appendChild(add);
+}
+
+function openMember(id) {
+  currentMemberId = id;
+  const members = getAllMembers();
+  const m = members.find(x=>x.id===id) || {};
+  const data = getMemberData(id) || {};
+  FIELDS.forEach(f => { const el = document.getElementById('d-'+f); if(el) el.value = data[f] || (f==='name'?m.name:f==='role'?m.role:f==='tenure'?(m.tenure||'tenured'):'') || ''; });
+  document.getElementById('detail-name').textContent = data.name || m.name;
+  document.getElementById('detail-role-line').textContent = `${data.role||m.role} · ${(data.tenure||m.tenure)==='tenured'?'Tenured (1+ year)':'New Employee (< 2 months)'}`;
+  showView('detail');
+}
+
+function saveMember() {
+  if (!currentMemberId) return;
+  const data = {};
+  FIELDS.forEach(f => { const el = document.getElementById('d-'+f); if(el) data[f] = el.value; });
+  localStorage.setItem('mpl_member_' + currentMemberId, JSON.stringify(data));
+  const members = getAllMembers();
+  const idx = members.findIndex(m=>m.id===currentMemberId);
+  if (idx !== -1) { members[idx].name = data.name||members[idx].name; members[idx].role = data.role||members[idx].role; members[idx].tenure = data.tenure||members[idx].tenure; saveMemberList(members); }
+  document.getElementById('detail-name').textContent = data.name;
+  document.getElementById('detail-role-line').textContent = `${data.role} · ${data.tenure==='tenured'?'Tenured (1+ year)':'New Employee (< 2 months)'}`;
+  updateLastSaved(); showToast('Saved!');
+}
+
+function addMember() {
+  const members = getAllMembers();
+  const id = 'member' + Date.now();
+  members.push({ id, name: 'New Team Member', role: 'Add role...', tenure: 'tenured' });
+  saveMemberList(members); renderOverview(); openMember(id);
+}
+
+// ===== 1-ON-1 =====
+function buildTemplateList() {
+  const list = document.getElementById('onone-tpl-list');
+  list.innerHTML = '';
+  TEMPLATES.forEach((theme, ti) => {
+    const group = document.createElement('div');
+    group.className = 'theme-group';
+    const hdr = document.createElement('button');
+    hdr.className = 'theme-header';
+    hdr.innerHTML = `<span>${theme.theme}</span><span class="theme-arrow">▼</span>`;
+    const tpls = document.createElement('div');
+    tpls.className = 'theme-templates';
+    theme.items.forEach((tpl, idx) => {
+      const btn = document.createElement('button');
+      btn.className = 'tpl-link';
+      btn.textContent = tpl.title;
+      btn.onclick = () => loadTemplate(ti, idx, btn);
+      tpls.appendChild(btn);
+    });
+    hdr.onclick = () => {
+      const open = tpls.classList.contains('open');
+      document.querySelectorAll('.theme-templates').forEach(t=>t.classList.remove('open'));
+      document.querySelectorAll('.theme-arrow').forEach(a=>a.classList.remove('open'));
+      if (!open) { tpls.classList.add('open'); hdr.querySelector('.theme-arrow').classList.add('open'); }
+    };
+    group.appendChild(hdr); group.appendChild(tpls); list.appendChild(group);
+  });
+}
+
+function buildMemberSelect() {
+  const sel = document.getElementById('onone-member-select');
+  const prev = sel.value;
+  sel.innerHTML = '<option value="">— Select team member —</option>';
+  getAllMembers().forEach(m => {
+    const data = getMemberData(m.id) || {};
+    const name = data.name || m.name;
+    const opt = document.createElement('option');
+    opt.value = name; opt.textContent = name;
+    if (name === prev) opt.selected = true;
+    sel.appendChild(opt);
+  });
+}
+
+function loadTemplate(ti, idx, btn) {
+  document.querySelectorAll('.tpl-link').forEach(b=>b.classList.remove('active-tpl'));
+  btn.classList.add('active-tpl');
+  const tpl = TEMPLATES[ti].items[idx];
+  document.getElementById('onone-welcome').style.display = 'none';
+  document.getElementById('onone-meeting').classList.add('active');
+  document.getElementById('onone-title').textContent = tpl.title;
+  document.getElementById('onone-summary').classList.remove('visible');
+  document.getElementById('onone-summary-output').textContent = '';
+  document.getElementById('onone-save-btn').textContent = 'Save to History';
+  document.getElementById('onone-save-btn').disabled = false;
+  currentSummaryData = null;
+  document.getElementById('onone-date').value = new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
+  buildMemberSelect();
+  const blocks = document.getElementById('onone-q-blocks');
+  blocks.innerHTML = '';
+  tpl.q.forEach(([type, text]) => {
+    const cls = TYPE_CLS[type] || 'rapport';
+    const div = document.createElement('div');
+    div.className = `q-block ${cls}`;
+    div.innerHTML = `<div class="q-block-label">${type}</div><div class="q-block-question">${text}</div><textarea placeholder="Notes..."></textarea>`;
+    blocks.appendChild(div);
+  });
+  document.getElementById('onone-workspace').scrollTop = 0;
+}
+
+function generateSummary() {
+  const title = document.getElementById('onone-title').textContent;
+  const memberName = document.getElementById('onone-member-select').value || 'Unknown';
+  const date = document.getElementById('onone-date').value || new Date().toLocaleDateString();
+  const ts = Date.now();
+  let text = `Employee: ${memberName}\nMeeting: ${title}\nDate: ${date}\n\n${'─'.repeat(42)}\n\n`;
+  const qaPairs = [];
+  document.querySelectorAll('#onone-q-blocks .q-block').forEach(block => {
+    const label = block.querySelector('.q-block-label').textContent;
+    const question = block.querySelector('.q-block-question').textContent;
+    const note = block.querySelector('textarea').value.trim();
+    qaPairs.push({ question: `${label}: ${question}`, answer: note });
+    text += `[${label}: ${question}]\n> ${note || 'No notes taken.'}\n\n`;
+  });
+  document.getElementById('onone-summary-output').textContent = text;
+  document.getElementById('onone-summary').classList.add('visible');
+  document.getElementById('onone-summary').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  currentSummaryData = { id: ts, title, memberName, date, content: text, qaPairs };
+}
+
+function saveMeetingToHistory() {
+  if (!currentSummaryData) return;
+  const hist = getMeetingHistory();
+  hist.unshift(currentSummaryData);
+  localStorage.setItem('mpl_1on1_history', JSON.stringify(hist));
+  document.getElementById('onone-save-btn').textContent = 'Saved!';
+  document.getElementById('onone-save-btn').disabled = true;
+  updateLastSaved(); showToast('Meeting saved to history!');
+}
+
+function copyMeetingSummary() {
+  navigator.clipboard.writeText(document.getElementById('onone-summary-output').textContent).then(()=>showToast('Copied!'));
+}
+
+function printMeetingSummary() {
+  const w = window.open('','_blank');
+  w.document.write(`<pre style="font-family:sans-serif;white-space:pre-wrap;padding:20px;line-height:1.6;">${document.getElementById('onone-summary-output').textContent}</pre>`);
+  w.document.close(); w.print();
+}
+
+function clearMeeting() {
+  document.querySelectorAll('#onone-q-blocks textarea').forEach(t=>t.value='');
+  document.getElementById('onone-summary').classList.remove('visible');
+}
+
+function getMeetingHistory() { return JSON.parse(localStorage.getItem('mpl_1on1_history')||'[]'); }
+
+function renderHistory() {
+  const hist = getMeetingHistory();
+  const grid = document.getElementById('onone-hist-grid');
+  const empty = document.getElementById('onone-empty-state');
+  grid.innerHTML = '';
+  if (!hist.length) { empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+  hist.forEach(m => {
+    const card = document.createElement('div');
+    card.className = 'hist-card';
+    card.innerHTML = `
+      <div class="hist-card-top"><div class="hist-name">${m.memberName}</div><div class="hist-date">${m.date}</div></div>
+      <div class="hist-tpl">${m.title}</div>
+      <div class="hist-actions">
+        <button class="hist-view-btn" data-id="${m.id}">View Details</button>
+        <button class="hist-del-btn" data-id="${m.id}">Delete</button>
+      </div>`;
+    grid.appendChild(card);
+  });
+  document.querySelectorAll('.hist-view-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const m = hist.find(x=>x.id==btn.dataset.id); if(!m) return;
+      document.getElementById('modal-title').textContent = m.memberName;
+      document.getElementById('modal-meta').textContent = `${m.title} · ${m.date}`;
+      document.getElementById('modal-body').textContent = m.content;
+      document.getElementById('hist-modal').classList.add('open');
+    });
+  });
+  document.querySelectorAll('.hist-del-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (!confirm('Delete this saved meeting?')) return;
+      const updated = getMeetingHistory().filter(x=>x.id!=btn.dataset.id);
+      localStorage.setItem('mpl_1on1_history', JSON.stringify(updated)); renderHistory();
+    });
+  });
+}
+
+function clearAllHistory() {
+  if (!confirm('Delete ALL meeting history? This cannot be undone.')) return;
+  localStorage.removeItem('mpl_1on1_history'); renderHistory();
+}
+
+// ===== NAVIGATION =====
+function showView(name) {
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  const idx = {overview:0,questions:1,'1on1':2,notes:3,detail:null}[name];
+  document.getElementById('view-'+name).classList.add('active');
+  if (idx !== null && idx !== undefined) document.querySelectorAll('.tab-btn')[idx].classList.add('active');
+  if (name === 'overview') renderOverview();
+  if (name === '1on1') { buildMemberSelect(); renderHistory(); }
+}
+
+function showSubtab(name) {
+  document.querySelectorAll('.subtab-view').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('.subtab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('subtab-'+name).classList.add('active');
+  document.querySelectorAll('.subtab-btn')[{conduct:0,guide:1,history:2}[name]].classList.add('active');
+  if (name === 'history') renderHistory();
+}
+
+// ===== UTILS =====
+function saveTeamNotes() {
+  localStorage.setItem('mpl_team_notes', document.getElementById('teamNotes').value);
+  updateLastSaved(); showToast('Team notes saved!');
+}
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2200);
+}
+function updateLastSaved() {
+  document.getElementById('lastSaved').textContent = 'Saved ' + new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+}
+document.getElementById('hist-modal').addEventListener('click', function(e){ if(e.target===this) this.classList.remove('open'); });
+
+// ===== INIT =====
+initMembers();
+renderOverview();
+buildTemplateList();
+const savedNotes = localStorage.getItem('mpl_team_notes');
+if (savedNotes) document.getElementById('teamNotes').value = savedNotes;
+</script>
+</body>
+</html>

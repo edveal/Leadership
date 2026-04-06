@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MPL System Team — Member Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #1a1a2e;
+    --ink-soft: #4a4a6a;
+    --ink-muted: #8888aa;
+    --paper: #faf8f3;
+    --paper-warm: #f3efe6;
+    --paper-card: #ffffff;
+    --accent: #2d5a8e;
+    --accent-light: #e8f0f8;
+    --accent-warm: #8b3a3a;
+    --accent-warm-light: #f5e8e8;
+    --gold: #c9963a;
+    --gold-light: #fdf3e3;
+    --green: #2d6a4f;
+    --green-light: #e8f4ee;
+    --border: rgba(26,26,46,0.1);
+    --border-strong: rgba(26,26,46,0.2);
+    --radius: 10px;
+    --shadow: 0 2px 12px rgba(26,26,46,0.08);
+    --font-display: 'Playfair Display', Georgia, serif;
+    --font-body: 'DM Sans', system-ui, sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--font-body);
+    background: var(--paper);
+    color: var(--ink);
+    min-height: 100vh;
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+  /* Header */
+  .site-header {
+    background: var(--ink);
+    color: white;
+    padding: 2rem 2.5rem;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+  .site-header h1 {
+    font-family: var(--font-display);
+    font-size: 1.9rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+  }
+  .site-header .subtitle {
+    font-size: 0.85rem;
+    color: rgba(255,255,255,0.55);
+    font-weight: 300;
+    margin-top: 3px;
+  }
+  .header-meta {
+    font-size: 0.8rem;
+    color: rgba(255,255,255,0.45);
+    text-align: right;
+  }
+
+  /* Nav Tabs */
+  .tab-bar {
+    background: var(--paper-warm);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2.5rem;
+    display: flex;
+    gap: 0;
+    overflow-x: auto;
+  }
+  .tab-btn {
+    font-family: var(--font-body);
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--ink-muted);
+    background: none;
+    border: none;
+    border-bottom: 2.5px solid transparent;
+    padding: 0.85rem 1.25rem;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: color 0.15s, border-color 0.15s;
+    letter-spacing: 0.02em;
+  }
+  .tab-btn:hover { color: var(--ink-soft); }
+  .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* Layout */
+  .main { padding: 2rem 2.5rem; max-width: 1200px; }
+
+  /* View sections */
+  .view { display: none; }
+  .view.active { display: block; }
+
+  /* ---- OVERVIEW VIEW ---- */
+  .overview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.25rem;
+    margin-top: 1.5rem;
+  }
+
+  .member-card {
+    background: var(--paper-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem 1.4rem;
+    cursor: pointer;
+    transition: box-shadow 0.2s, transform 0.15s;
+    position: relative;
+    overflow: hidden;
+  }
+  .member-card:hover { box-shadow: var(--shadow); transform: translateY(-1px); }
+  .member-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+  }
+  .member-card.tenured::before { background: var(--accent); }
+  .member-card.new::before { background: var(--gold); }
+
+  .member-card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 0.85rem;
+  }
+  .avatar {
+    width: 42px; height: 42px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-display);
+    font-size: 1.05rem;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+  .avatar.tenured { background: var(--accent-light); color: var(--accent); }
+  .avatar.new { background: var(--gold-light); color: var(--gold); }
+
+  .member-name { font-weight: 500; font-size: 0.95rem; }
+  .member-role { font-size: 0.78rem; color: var(--ink-muted); margin-top: 1px; }
+
+  .tenure-badge {
+    display: inline-block;
+    font-size: 0.7rem;
+    font-weight: 500;
+    padding: 2px 8px;
+    border-radius: 20px;
+    margin-bottom: 0.75rem;
+  }
+  .badge-tenured { background: var(--accent-light); color: var(--accent); }
+  .badge-new { background: var(--gold-light); color: #7a5a1a; }
+
+  .card-preview {
+    font-size: 0.8rem;
+    color: var(--ink-soft);
+    line-height: 1.55;
+  }
+  .card-preview .preview-label {
+    font-weight: 500;
+    color: var(--ink-muted);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 2px;
+  }
+  .card-preview .preview-value {
+    margin-bottom: 0.6rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .card-complete {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 0.85rem;
+    font-size: 0.75rem;
+    color: var(--ink-muted);
+  }
+  .dot { width: 8px; height: 8px; border-radius: 50%; }
+  .dot.filled { background: var(--green); }
+  .dot.empty { background: var(--border-strong); }
+
+  .add-member-card {
+    background: none;
+    border: 1.5px dashed var(--border-strong);
+    border-radius: var(--radius);
+    padding: 1.25rem 1.4rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    color: var(--ink-muted);
+    font-family: var(--font-body);
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: background 0.15s, color 0.15s;
+    min-height: 160px;
+  }
+  .add-member-card:hover { background: var(--paper-warm); color: var(--ink-soft); }
+
+  /* ---- MEMBER DETAIL VIEW ---- */
+  .detail-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+  }
+  .back-btn {
+    background: none;
+    border: 1px solid var(--border-strong);
+    border-radius: 6px;
+    padding: 6px 14px;
+    font-family: var(--font-body);
+    font-size: 0.8rem;
+    cursor: pointer;
+    color: var(--ink-soft);
+    transition: background 0.15s;
+  }
+  .back-btn:hover { background: var(--paper-warm); }
+
+  .detail-name { font-family: var(--font-display); font-size: 1.6rem; font-weight: 600; }
+  .detail-role-line { font-size: 0.85rem; color: var(--ink-muted); margin-top: 2px; }
+
+  .detail-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+  }
+  @media (max-width: 700px) { .detail-grid { grid-template-columns: 1fr; } }
+
+  .detail-section {
+    background: var(--paper-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem 1.4rem;
+  }
+  .detail-section.full-width { grid-column: 1 / -1; }
+  .section-title {
+    font-size: 0.72rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--ink-muted);
+    margin-bottom: 0.85rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .field-group { margin-bottom: 1rem; }
+  .field-group:last-child { margin-bottom: 0; }
+  .field-label {
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: var(--ink-soft);
+    margin-bottom: 4px;
+    display: block;
+  }
+  textarea, input[type="text"] {
+    width: 100%;
+    font-family: var(--font-body);
+    font-size: 0.88rem;
+    color: var(--ink);
+    background: var(--paper);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 10px;
+    resize: vertical;
+    transition: border-color 0.15s;
+    line-height: 1.55;
+  }
+  textarea:focus, input[type="text"]:focus {
+    outline: none;
+    border-color: var(--accent);
+    background: white;
+  }
+  textarea { min-height: 72px; }
+
+  .save-btn {
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 9px 22px;
+    font-family: var(--font-body);
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s;
+    margin-top: 1.25rem;
+  }
+  .save-btn:hover { background: #1e3f6e; }
+  .save-note { font-size: 0.75rem; color: var(--ink-muted); margin-top: 0.5rem; }
+
+  /* ---- QUESTIONS VIEW ---- */
+  .questions-intro {
+    font-size: 0.9rem;
+    color: var(--ink-soft);
+    max-width: 640px;
+    margin-bottom: 1.75rem;
+    line-height: 1.7;
+  }
+  .q-category { margin-bottom: 2rem; }
+  .q-category-title {
+    font-family: var(--font-display);
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--ink);
+    margin-bottom: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .q-category-title .cat-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .q-list { list-style: none; }
+  .q-item {
+    background: var(--paper-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.85rem 1.1rem;
+    margin-bottom: 0.55rem;
+    font-size: 0.88rem;
+    color: var(--ink-soft);
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    cursor: pointer;
+    transition: background 0.12s;
+  }
+  .q-item:hover { background: var(--paper-warm); }
+  .q-num {
+    font-weight: 500;
+    color: var(--ink-muted);
+    font-size: 0.78rem;
+    min-width: 20px;
+    padding-top: 1px;
+  }
+  .q-context {
+    display: inline-block;
+    font-size: 0.68rem;
+    font-weight: 500;
+    padding: 2px 7px;
+    border-radius: 20px;
+    margin-left: 6px;
+    vertical-align: middle;
+  }
+  .ctx-group { background: var(--accent-light); color: var(--accent); }
+  .ctx-individual { background: var(--green-light); color: var(--green); }
+  .ctx-both { background: var(--gold-light); color: #7a5a1a; }
+
+  /* ---- NOTES VIEW ---- */
+  .notes-area {
+    background: var(--paper-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    margin-top: 1rem;
+  }
+  .notes-area textarea {
+    min-height: 320px;
+    font-size: 0.9rem;
+    background: none;
+    border: none;
+    padding: 0;
+    font-family: var(--font-body);
+  }
+  .notes-area textarea:focus { outline: none; background: none; border: none; }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 2rem; right: 2rem;
+    background: var(--ink);
+    color: white;
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-size: 0.82rem;
+    opacity: 0;
+    transform: translateY(6px);
+    transition: opacity 0.2s, transform 0.2s;
+    pointer-events: none;
+    z-index: 100;
+  }
+  .toast.show { opacity: 1; transform: translateY(0); }
+
+  .section-header {
+    margin-bottom: 0.5rem;
+  }
+  .section-header h2 {
+    font-family: var(--font-display);
+    font-size: 1.25rem;
+    font-weight: 600;
+  }
+  .section-header p { font-size: 0.85rem; color: var(--ink-muted); margin-top: 3px; }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div>
+    <h1>McKinney Public Library</h1>
+    <div class="subtitle">System Team — Member Tracker &amp; Onboarding Notes</div>
+  </div>
+  <div class="header-meta" id="lastSaved">Not yet saved</div>
+</header>
+
+<nav class="tab-bar">
+  <button class="tab-btn active" onclick="showView('overview')">Team Overview</button>
+  <button class="tab-btn" onclick="showView('questions')">Ice Breaker Questions</button>
+  <button class="tab-btn" onclick="showView('notes')">Team Notes</button>
+</nav>
+
+<div class="main">
+
+  <!-- OVERVIEW -->
+  <div id="view-overview" class="view active">
+    <div class="section-header">
+      <h2>Team Members</h2>
+      <p>Click any card to view and edit notes for that member.</p>
+    </div>
+    <div class="overview-grid" id="teamGrid"></div>
+  </div>
+
+  <!-- MEMBER DETAIL -->
+  <div id="view-detail" class="view">
+    <div class="detail-header">
+      <button class="back-btn" onclick="showView('overview')">← Back</button>
+      <div>
+        <div class="detail-name" id="detail-name"></div>
+        <div class="detail-role-line" id="detail-role-line"></div>
+      </div>
+    </div>
+    <div class="detail-grid">
+      <div class="detail-section">
+        <div class="section-title">Basic Info</div>
+        <div class="field-group">
+          <label class="field-label">Name</label>
+          <input type="text" id="d-name" placeholder="Full name">
+        </div>
+        <div class="field-group">
+          <label class="field-label">Job Title / Role</label>
+          <input type="text" id="d-role" placeholder="e.g. Circulation Specialist">
+        </div>
+        <div class="field-group">
+          <label class="field-label">Tenure Status</label>
+          <select id="d-tenure" style="width:100%;font-family:var(--font-body);font-size:0.88rem;color:var(--ink);background:var(--paper);border:1px solid var(--border);border-radius:6px;padding:8px 10px;">
+            <option value="tenured">Tenured (1+ year)</option>
+            <option value="new">New Employee (&lt; 2 months)</option>
+          </select>
+        </div>
+        <div class="field-group">
+          <label class="field-label">Start Date at MPL</label>
+          <input type="text" id="d-startdate" placeholder="e.g. March 2024">
+        </div>
+      </div>
+
+      <div class="detail-section">
+        <div class="section-title">Skills &amp; Strengths</div>
+        <div class="field-group">
+          <label class="field-label">Known skills / areas of expertise</label>
+          <textarea id="d-skills" placeholder="What do they excel at? Any technical skills, systems knowledge, etc."></textarea>
+        </div>
+        <div class="field-group">
+          <label class="field-label">Hidden talents or surprises</label>
+          <textarea id="d-talents" placeholder="Things that came up in ice breakers or one-on-ones..."></textarea>
+        </div>
+        <div class="field-group">
+          <label class="field-label">Natural team role</label>
+          <input type="text" id="d-teamrole" placeholder="e.g. problem-solver, communicator, organizer">
+        </div>
+      </div>
+
+      <div class="detail-section">
+        <div class="section-title">Professional Goals</div>
+        <div class="field-group">
+          <label class="field-label">2–3 year professional goals</label>
+          <textarea id="d-goals" placeholder="Where do they want to be?"></textarea>
+        </div>
+        <div class="field-group">
+          <label class="field-label">Skills they want to develop</label>
+          <textarea id="d-develop" placeholder="What have they wanted to learn but haven't had a chance to?"></textarea>
+        </div>
+        <div class="field-group">
+          <label class="field-label">What a "win" looks like for them on this team</label>
+          <textarea id="d-win" placeholder="Their personal definition of success here..."></textarea>
+        </div>
+      </div>
+
+      <div class="detail-section">
+        <div class="section-title">Working Style &amp; Culture Fit</div>
+        <div class="field-group">
+          <label class="field-label">Feedback preference</label>
+          <input type="text" id="d-feedback" placeholder="Direct/quick vs. contextualized/discussed">
+        </div>
+        <div class="field-group">
+          <label class="field-label">What makes them feel valued at work</label>
+          <textarea id="d-valued" placeholder="Recognition style, autonomy, collaboration, etc."></textarea>
+        </div>
+        <div class="field-group">
+          <label class="field-label">Why they work at a public library</label>
+          <textarea id="d-why" placeholder="Their motivations and connection to public service..."></textarea>
+        </div>
+      </div>
+
+      <div class="detail-section full-width">
+        <div class="section-title">Free Notes &amp; Observations</div>
+        <div class="field-group">
+          <label class="field-label">One-on-one notes</label>
+          <textarea id="d-1on1" placeholder="Notes from individual conversations..." style="min-height:100px;"></textarea>
+        </div>
+        <div class="field-group">
+          <label class="field-label">Team session observations</label>
+          <textarea id="d-teamobs" placeholder="How they interact in group settings, ice breaker responses, etc..." style="min-height:100px;"></textarea>
+        </div>
+        <div class="field-group">
+          <label class="field-label">Action items / follow-ups</label>
+          <textarea id="d-actions" placeholder="Things to circle back on, introductions to make, resources to share..."></textarea>
+        </div>
+      </div>
+    </div>
+
+    <button class="save-btn" onclick="saveMember()">Save Member Notes</button>
+    <div class="save-note">All data is saved in your browser's local storage — no account needed.</div>
+  </div>
+
+  <!-- QUESTIONS -->
+  <div id="view-questions" class="view">
+    <p class="questions-intro">
+      These questions are designed for your System Team onboarding at MPL. Use the context tags to guide when to use each one.
+      <span style="display:inline-flex;align-items:center;gap:5px;margin-left:6px;">
+        <span class="q-context ctx-group">Group</span>
+        <span class="q-context ctx-individual">1-on-1</span>
+        <span class="q-context ctx-both">Both</span>
+      </span>
+    </p>
+
+    <div class="q-category">
+      <div class="q-category-title"><span class="cat-dot" style="background:#2d5a8e;"></span>Skills &amp; Strengths</div>
+      <ul class="q-list">
+        <li class="q-item"><span class="q-num">1</span><span>What's a task at work where you feel most "in your element"? <span class="q-context ctx-both">Both</span></span></li>
+        <li class="q-item"><span class="q-num">2</span><span>What's something you know how to do that most people would be surprised by? <span class="q-context ctx-group">Group</span></span></li>
+        <li class="q-item"><span class="q-num">3</span><span>If our team was stuck on a tough problem, what role would you naturally fall into — researcher, idea generator, organizer, executor? <span class="q-context ctx-both">Both</span></span></li>
+        <li class="q-item"><span class="q-num">4</span><span>What tools, systems, or workflows have you become the go-to person for — either here or at a previous job? <span class="q-context ctx-individual">1-on-1</span></span></li>
+        <li class="q-item"><span class="q-num">5</span><span>Is there a project or task type you've always wanted to take the lead on? <span class="q-context ctx-individual">1-on-1</span></span></li>
+      </ul>
+    </div>
+
+    <div class="q-category">
+      <div class="q-category-title"><span class="cat-dot" style="background:#c9963a;"></span>Professional Goals</div>
+      <ul class="q-list">
+        <li class="q-item"><span class="q-num">6</span><span>Where do you hope to be professionally in 2–3 years? <span class="q-context ctx-individual">1-on-1</span></span></li>
+        <li class="q-item"><span class="q-num">7</span><span>What's one skill you've been wanting to develop but haven't had the chance to yet? <span class="q-context ctx-individual">1-on-1</span></span></li>
+        <li class="q-item"><span class="q-num">8</span><span>Is there a type of project or responsibility you've never had but would love to try? <span class="q-context ctx-individual">1-on-1</span></span></li>
+        <li class="q-item"><span class="q-num">9</span><span>What does a personal "win" look like for you on this team — what would make you feel like it was worth being here? <span class="q-context ctx-individual">1-on-1</span></span></li>
+        <li class="q-item"><span class="q-num">10</span><span>If you could add one thing to your resume by the end of the year, what would it be? <span class="q-context ctx-individual">1-on-1</span></span></li>
+      </ul>
+    </div>
+
+    <div class="q-category">
+      <div class="q-category-title"><span class="cat-dot" style="background:#2d6a4f;"></span>Team &amp; MPL Culture</div>
+      <ul class="q-list">
+        <li class="q-item"><span class="q-num">11</span><span>What made you want to work at a public library specifically? <span class="q-context ctx-both">Both</span></span></li>
+        <li class="q-item"><span class="q-num">12</span><span>What's something a previous team or workplace did really well that you'd love to bring here? <span class="q-context ctx-both">Both</span></span></li>
+        <li class="q-item"><span class="q-num">13</span><span>How do you prefer to receive feedback — direct and quick, or with context and a lead-up conversation? <span class="q-context ctx-individual">1-on-1</span></span></li>
+        <li class="q-item"><span class="q-num">14</span><span>What's one thing that makes you feel genuinely valued at work? <span class="q-context ctx-individual">1-on-1</span></span></li>
+        <li class="q-item"><span class="q-num">15</span><span>What do you think makes a library system team different from other teams at an organization like this? <span class="q-context ctx-group">Group</span></span></li>
+      </ul>
+    </div>
+
+    <div class="q-category">
+      <div class="q-category-title"><span class="cat-dot" style="background:#8b3a3a;"></span>Ice Breakers (lighter, great for group settings)</div>
+      <ul class="q-list">
+        <li class="q-item"><span class="q-num">16</span><span>What's a book, show, podcast, or hobby you'd recommend to everyone on this team? <span class="q-context ctx-group">Group</span></span></li>
+        <li class="q-item"><span class="q-num">17</span><span>If you could swap jobs with anyone at MPL for one week, who would it be and why? <span class="q-context ctx-group">Group</span></span></li>
+        <li class="q-item"><span class="q-num">18</span><span>What's something you were nervous or unsure about when you first started here? <span class="q-context ctx-group">Group</span></span></li>
+        <li class="q-item"><span class="q-num">19</span><span>What's the most interesting patron interaction or library moment you've witnessed? <span class="q-context ctx-group">Group</span></span></li>
+        <li class="q-item"><span class="q-num">20</span><span>If this team had a name — like a sports team or a band — what would you call us? <span class="q-context ctx-group">Group</span></span></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- TEAM NOTES -->
+  <div id="view-notes" class="view">
+    <div class="section-header">
+      <h2>Team Notes</h2>
+      <p>A shared scratchpad for overall team observations, patterns, and planning notes.</p>
+    </div>
+    <div class="notes-area">
+      <textarea id="teamNotes" placeholder="Overall team observations, patterns you're noticing, dynamics, planning notes, things to bring up at your first team meeting..."></textarea>
+    </div>
+    <button class="save-btn" onclick="saveTeamNotes()">Save Notes</button>
+    <div class="save-note">Saved automatically in your browser's local storage.</div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const DEFAULT_MEMBERS = [
+  { id: 'member1', name: 'Team Member 1', role: 'Add role...', tenure: 'tenured' },
+  { id: 'member2', name: 'Team Member 2', role: 'Add role...', tenure: 'tenured' },
+  { id: 'member3', name: 'Team Member 3', role: 'Add role...', tenure: 'new' },
+  { id: 'member4', name: 'Team Member 4', role: 'Add role...', tenure: 'new' },
+];
+
+const FIELDS = ['name','role','tenure','startdate','skills','talents','teamrole','goals','develop','win','feedback','valued','why','1on1','teamobs','actions'];
+
+let currentMemberId = null;
+
+function getMemberData(id) {
+  const raw = localStorage.getItem('mpl_member_' + id);
+  return raw ? JSON.parse(raw) : null;
+}
+
+function getAllMembers() {
+  const raw = localStorage.getItem('mpl_members_list');
+  return raw ? JSON.parse(raw) : DEFAULT_MEMBERS.map(m => ({...m}));
+}
+
+function saveMemberList(list) {
+  localStorage.setItem('mpl_members_list', JSON.stringify(list));
+}
+
+function initMembers() {
+  if (!localStorage.getItem('mpl_members_list')) {
+    saveMemberList(DEFAULT_MEMBERS);
+  }
+}
+
+function getInitials(name) {
+  return name.split(' ').filter(Boolean).slice(0,2).map(w => w[0]).join('').toUpperCase() || '?';
+}
+
+function renderOverview() {
+  const grid = document.getElementById('teamGrid');
+  const members = getAllMembers();
+  grid.innerHTML = '';
+
+  members.forEach(m => {
+    const data = getMemberData(m.id) || {};
+    const tenure = data.tenure || m.tenure;
+    const name = data.name || m.name;
+    const role = data.role || m.role;
+
+    const filledFields = FIELDS.filter(f => f !== 'name' && f !== 'role' && f !== 'tenure' && (data[f] || '').trim().length > 0);
+    const totalFields = FIELDS.length - 3;
+
+    const card = document.createElement('div');
+    card.className = 'member-card ' + tenure;
+    card.onclick = () => openMember(m.id);
+
+    const dots = Array.from({length: Math.min(totalFields, 10)}, (_, i) =>
+      `<span class="dot ${i < filledFields.length ? 'filled' : 'empty'}"></span>`
+    ).join('');
+
+    card.innerHTML = `
+      <div class="member-card-header">
+        <div class="avatar ${tenure}">${getInitials(name)}</div>
+        <div>
+          <div class="member-name">${name}</div>
+          <div class="member-role">${role}</div>
+        </div>
+      </div>
+      <span class="tenure-badge ${tenure === 'tenured' ? 'badge-tenured' : 'badge-new'}">
+        ${tenure === 'tenured' ? 'Tenured (1+ year)' : 'New Employee'}
+      </span>
+      <div class="card-preview">
+        ${data.skills ? `<div class="preview-label">Skills</div><div class="preview-value">${data.skills}</div>` : ''}
+        ${data.goals ? `<div class="preview-label">Goals</div><div class="preview-value">${data.goals}</div>` : ''}
+        ${!data.skills && !data.goals ? '<span style="color:var(--ink-muted);font-size:0.8rem;font-style:italic;">No notes yet — click to add</span>' : ''}
+      </div>
+      <div class="card-complete">${dots}<span style="margin-left:4px;">${filledFields.length}/${totalFields} fields filled</span></div>
+    `;
+    grid.appendChild(card);
+  });
+
+  const addCard = document.createElement('button');
+  addCard.className = 'add-member-card';
+  addCard.onclick = addMember;
+  addCard.innerHTML = `<span style="font-size:1.4rem;color:var(--ink-muted);">+</span> Add team member`;
+  grid.appendChild(addCard);
+}
+
+function openMember(id) {
+  currentMemberId = id;
+  const members = getAllMembers();
+  const m = members.find(x => x.id === id) || {};
+  const data = getMemberData(id) || {};
+
+  FIELDS.forEach(f => {
+    const el = document.getElementById('d-' + f);
+    if (el) el.value = data[f] || (f === 'name' ? m.name : f === 'role' ? m.role : f === 'tenure' ? (m.tenure || 'tenured') : '') || '';
+  });
+
+  const name = data.name || m.name;
+  const role = data.role || m.role;
+  const tenure = data.tenure || m.tenure;
+  document.getElementById('detail-name').textContent = name;
+  document.getElementById('detail-role-line').textContent = `${role} · ${tenure === 'tenured' ? 'Tenured (1+ year)' : 'New Employee (< 2 months)'}`;
+
+  showView('detail');
+}
+
+function saveMember() {
+  if (!currentMemberId) return;
+  const data = {};
+  FIELDS.forEach(f => {
+    const el = document.getElementById('d-' + f);
+    if (el) data[f] = el.value;
+  });
+  localStorage.setItem('mpl_member_' + currentMemberId, JSON.stringify(data));
+
+  const members = getAllMembers();
+  const idx = members.findIndex(m => m.id === currentMemberId);
+  if (idx !== -1) {
+    members[idx].name = data.name || members[idx].name;
+    members[idx].role = data.role || members[idx].role;
+    members[idx].tenure = data.tenure || members[idx].tenure;
+    saveMemberList(members);
+  }
+
+  document.getElementById('detail-name').textContent = data.name;
+  document.getElementById('detail-role-line').textContent = `${data.role} · ${data.tenure === 'tenured' ? 'Tenured (1+ year)' : 'New Employee (< 2 months)'}`;
+
+  updateLastSaved();
+  showToast('Saved!');
+}
+
+function addMember() {
+  const members = getAllMembers();
+  const id = 'member' + Date.now();
+  members.push({ id, name: 'New Team Member', role: 'Add role...', tenure: 'tenured' });
+  saveMemberList(members);
+  renderOverview();
+  openMember(id);
+}
+
+function saveTeamNotes() {
+  localStorage.setItem('mpl_team_notes', document.getElementById('teamNotes').value);
+  updateLastSaved();
+  showToast('Team notes saved!');
+}
+
+function showView(name) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  const views = { overview: 0, questions: 1, notes: 2, detail: null };
+  document.getElementById('view-' + name).classList.add('active');
+  if (views[name] !== null && views[name] !== undefined) {
+    document.querySelectorAll('.tab-btn')[views[name]].classList.add('active');
+  }
+  if (name === 'overview') renderOverview();
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+function updateLastSaved() {
+  const now = new Date();
+  document.getElementById('lastSaved').textContent = 'Saved ' + now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+}
+
+// Init
+initMembers();
+renderOverview();
+const savedNotes = localStorage.getItem('mpl_team_notes');
+if (savedNotes) document.getElementById('teamNotes').value = savedNotes;
+const lastSaved = localStorage.getItem('mpl_last_saved');
+if (lastSaved) document.getElementById('lastSaved').textContent = 'Last saved: ' + lastSaved;
+</script>
+</body>
+</html>

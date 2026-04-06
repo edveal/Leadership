@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Systems Team Builder</title>
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --panel: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --border: #d1d5db;
+      --accent: #1d4ed8;
+      --accent-soft: #dbeafe;
+      --good: #166534;
+      --shadow: 0 8px 24px rgba(0,0,0,0.08);
+      --radius: 16px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.45;
+    }
+    header {
+      background: linear-gradient(135deg, #1d4ed8, #2563eb 55%, #60a5fa);
+      color: white;
+      padding: 2rem 1.25rem;
+    }
+    .wrap { max-width: 1200px; margin: 0 auto; }
+    header h1 { margin: 0 0 0.5rem; font-size: 2rem; }
+    header p { margin: 0; max-width: 850px; opacity: 0.95; }
+    main {
+      max-width: 1200px;
+      margin: 1.25rem auto 3rem;
+      padding: 0 1rem;
+      display: grid;
+      grid-template-columns: 340px 1fr;
+      gap: 1rem;
+    }
+    @media (max-width: 900px) { main { grid-template-columns: 1fr; } }
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 1rem;
+    }
+    h2, h3 { margin-top: 0; }
+    .muted { color: var(--muted); }
+    label {
+      display: block;
+      font-size: 0.95rem;
+      font-weight: 700;
+      margin-bottom: 0.35rem;
+    }
+    input[type="text"], input[type="date"], select, textarea {
+      width: 100%;
+      padding: 0.7rem 0.8rem;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font: inherit;
+      background: white;
+      color: var(--text);
+      margin-bottom: 0.85rem;
+    }
+    textarea { min-height: 90px; resize: vertical; }
+    .btn-row { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.5rem; }
+    button {
+      border: 0;
+      border-radius: 10px;
+      padding: 0.7rem 0.9rem;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .primary { background: var(--accent); color: white; }
+    .secondary { background: #e5e7eb; color: var(--text); }
+    .danger { background: #fee2e2; color: #b91c1c; }
+    .member-list { display: grid; gap: 0.6rem; margin-top: 1rem; }
+    .member-card {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 0.85rem;
+      background: #fafafa;
+      cursor: pointer;
+    }
+    .member-card.active {
+      border-color: var(--accent);
+      background: #eff6ff;
+    }
+    .tag {
+      display: inline-block;
+      margin-top: 0.35rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      background: #e5e7eb;
+      color: #374151;
+    }
+    .section-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+    @media (max-width: 800px) { .section-grid { grid-template-columns: 1fr; } }
+    details {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 0.75rem 0.9rem;
+      background: #fcfcfd;
+      margin-bottom: 0.8rem;
+    }
+    summary { font-weight: 700; cursor: pointer; }
+    .question-list { margin: 0.75rem 0 0; padding-left: 1.2rem; }
+    .question-list li { margin-bottom: 0.45rem; }
+    .pill-grid { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.8rem; }
+    .pill {
+      background: #f3f4f6;
+      border: 1px solid var(--border);
+      padding: 0.35rem 0.6rem;
+      border-radius: 999px;
+      font-size: 0.88rem;
+    }
+    .status { margin-top: 0.5rem; font-size: 0.92rem; color: var(--good); min-height: 1.2rem; }
+    .footer-note { margin-top: 1rem; font-size: 0.9rem; color: var(--muted); }
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <h1>Systems Team Builder</h1>
+      <p>A simple leadership page for one-on-ones, team discussions, and early team development. It stores data in your browser using localStorage, so it works as a single HTML file on your computer or a server.</p>
+    </div>
+  </header>
+
+  <main>
+    <aside class="panel">
+      <h2>Team Members</h2>
+      <p class="muted">Add each employee, then click their card to view or update notes.</p>
+
+      <label for="memberName">Name</label>
+      <input id="memberName" type="text" placeholder="Employee name" />
+
+      <label for="memberRole">Role / Title</label>
+      <input id="memberRole" type="text" placeholder="Librarian, Tech, Planetarium Manager, etc." />
+
+      <div class="two-col">
+        <div>
+          <label for="memberTenure">Tenure</label>
+          <select id="memberTenure">
+            <option value="New to MPL">New to MPL</option>
+            <option value="Established at MPL">Established at MPL</option>
+          </select>
+        </div>
+        <div>
+          <label for="memberStart">Start Date</label>
+          <input id="memberStart" type="date" />
+        </div>
+      </div>
+
+      <button class="primary" id="addMemberBtn">Add Team Member</button>
+      <div class="member-list" id="memberList"></div>
+
+      <div class="btn-row">
+        <button class="secondary" id="exportBtn">Export Data</button>
+        <button class="secondary" id="importBtn">Import Data</button>
+        <button class="danger" id="clearBtn">Clear All Data</button>
+      </div>
+      <input id="importFile" type="file" accept="application/json" style="display:none;" />
+      <div class="footer-note">Tip: export periodically for backup, especially if you are using this only in a browser.</div>
+    </aside>
+
+    <section>
+      <div class="panel" id="emptyState">
+        <h2>Start here</h2>
+        <p>Add your team members on the left, then select one to begin tracking one-on-one notes, strengths, goals, and growth interests.</p>
+        <p>You can also use the question bank below for both individual conversations and group sessions.</p>
+      </div>
+
+      <div class="panel" id="profilePanel" style="display:none;">
+        <h2 id="profileName">Team Member</h2>
+        <p class="muted" id="profileMeta"></p>
+
+        <div class="section-grid">
+          <div>
+            <label for="skills">Current Skills / Strengths</label>
+            <textarea id="skills" placeholder="Systems knowledge, troubleshooting, communication, training, documentation, customer service, project follow-through, etc."></textarea>
+
+            <label for="hiddenTalents">Hidden Talents / Underused Strengths</label>
+            <textarea id="hiddenTalents" placeholder="What talents might not be obvious from the job title?"></textarea>
+
+            <label for="professionalGoals">Professional Goals</label>
+            <textarea id="professionalGoals" placeholder="What do they want to grow into over the next 6–18 months?"></textarea>
+          </div>
+
+          <div>
+            <label for="motivators">Motivators / What They Want From the Team</label>
+            <textarea id="motivators" placeholder="What matters to them? Stability, learning, autonomy, public service impact, cross-training, leadership opportunities, clear priorities, etc."></textarea>
+
+            <label for="supportNeeds">Support Needed From Me</label>
+            <textarea id="supportNeeds" placeholder="What support will help them do their best work?"></textarea>
+
+            <label for="notes">General Notes</label>
+            <textarea id="notes" placeholder="Anything else worth remembering from one-on-ones or observations."></textarea>
+          </div>
+        </div>
+
+        <label for="nextSteps">Next Steps / Follow-Up Commitments</label>
+        <textarea id="nextSteps" placeholder="What did you commit to do? What did they commit to do? Capture concrete follow-ups."></textarea>
+
+        <div class="btn-row">
+          <button class="primary" id="saveProfileBtn">Save Notes</button>
+          <button class="secondary" id="deleteMemberBtn">Delete Team Member</button>
+        </div>
+        <div class="status" id="saveStatus"></div>
+      </div>
+
+      <div class="panel">
+        <h2>Question Bank</h2>
+        <p class="muted">These are aimed at surfacing strengths, working style, aspirations, and what each person wants from the Systems Team and McKinney Public Library more broadly.</p>
+
+        <details open>
+          <summary>1: Low-pressure icebreakers for one-on-ones or first team meetings</summary>
+          <ol class="question-list">
+            <li>What is one thing people here might not know about you yet?</li>
+            <li>What kind of work day leaves you feeling like, “That was a good day”?</li>
+            <li>What is something you tend to enjoy more than most people do at work?</li>
+            <li>What is a skill you have that does not always show up in your job description?</li>
+            <li>What is one tool, habit, or routine that helps you stay organized?</li>
+            <li>What kind of tasks give you energy, and which ones drain it?</li>
+            <li>What is one work accomplishment you are proud of from the last year?</li>
+            <li>What helps you feel welcomed into a new group?</li>
+          </ol>
+        </details>
+
+        <details>
+          <summary>2: Questions to identify strengths, talents, and working style</summary>
+          <ol class="question-list">
+            <li>What part of your current work comes most naturally to you?</li>
+            <li>When coworkers come to you for help, what do they usually ask you about?</li>
+            <li>Do you prefer being the person who starts new things, improves existing things, or keeps things steady and reliable?</li>
+            <li>What kind of problems do you most enjoy solving?</li>
+            <li>How do you like to learn something new: hands-on, reading, watching, shadowing, or talking it through?</li>
+            <li>How do you prefer to receive feedback?</li>
+            <li>When you are under pressure, what support helps the most?</li>
+            <li>What does good teamwork look like to you?</li>
+          </ol>
+        </details>
+
+        <details>
+          <summary>3: Questions about goals, growth, and career direction</summary>
+          <ol class="question-list">
+            <li>What would you like to be better at six months from now?</li>
+            <li>Are there projects, systems, or responsibilities you want more exposure to?</li>
+            <li>What professional skills would you like to build while you are at MPL?</li>
+            <li>What kind of support or opportunities would help you grow here?</li>
+            <li>Do you see yourself wanting to deepen your expertise, broaden your skills, or move toward leadership?</li>
+            <li>What does success in your role look like to you?</li>
+            <li>What kinds of work would you like to be trusted with more often?</li>
+            <li>What would make this team a place where you want to stay and grow?</li>
+          </ol>
+        </details>
+
+        <details>
+          <summary>4: Questions about the team and MPL as a workplace</summary>
+          <ol class="question-list">
+            <li>What do you hope this new Systems Team will be known for?</li>
+            <li>What should this team do really well for staff and patrons?</li>
+            <li>What gets in the way of doing great work in a library systems environment?</li>
+            <li>What is one thing MPL does well that we should protect?</li>
+            <li>What is one thing MPL could improve that would help staff do better work?</li>
+            <li>How can this team build trust with the rest of the library?</li>
+            <li>What kind of communication from leadership is most helpful to you?</li>
+            <li>What would help you feel connected to MPL’s bigger mission?</li>
+          </ol>
+        </details>
+
+        <details>
+          <summary>5: Good team discussion prompts</summary>
+          <ol class="question-list">
+            <li>What do we want people to experience when they interact with the Systems Team?</li>
+            <li>What does strong internal customer service look like for us?</li>
+            <li>What expectations should we set for communication, response time, and follow-through?</li>
+            <li>What are our team norms around documentation and knowledge sharing?</li>
+            <li>How do we want to handle mistakes, handoffs, and asking for help?</li>
+            <li>What strengths do we already have on this team, and where are our gaps?</li>
+            <li>What is one thing each person could teach the rest of the team?</li>
+            <li>What should we commit to in our first 90 days as a team?</li>
+          </ol>
+        </details>
+
+        <details>
+          <summary>6: Optional deeper one-on-one questions for later</summary>
+          <ol class="question-list">
+            <li>What kind of leadership brings out your best work?</li>
+            <li>What is something previous supervisors did that really helped you succeed?</li>
+            <li>What is something you wish managers understood better about your role?</li>
+            <li>What kind of recognition feels meaningful to you?</li>
+            <li>What early warning signs tell you that you are overloaded or getting frustrated?</li>
+            <li>What do you want me to know about how you work before we get too far into this?</li>
+          </ol>
+        </details>
+      </div>
+
+      <div class="panel">
+        <h2>Suggested tags to listen for</h2>
+        <div class="pill-grid">
+          <span class="pill">Troubleshooting</span>
+          <span class="pill">Training</span>
+          <span class="pill">Documentation</span>
+          <span class="pill">Customer service</span>
+          <span class="pill">Project management</span>
+          <span class="pill">Systems thinking</span>
+          <span class="pill">Detail oriented</span>
+          <span class="pill">Calm under pressure</span>
+          <span class="pill">Learns quickly</span>
+          <span class="pill">Cross-training</span>
+          <span class="pill">Leadership interest</span>
+          <span class="pill">Process improvement</span>
+          <span class="pill">Communication</span>
+          <span class="pill">Public service mindset</span>
+        </div>
+        <p class="muted">These can help you spot patterns across the whole team as you gather notes.</p>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const STORAGE_KEY = 'systems-team-builder-v1';
+    let state = loadState();
+    let selectedId = state.selectedId || null;
+
+    const memberList = document.getElementById('memberList');
+    const emptyState = document.getElementById('emptyState');
+    const profilePanel = document.getElementById('profilePanel');
+    const profileName = document.getElementById('profileName');
+    const profileMeta = document.getElementById('profileMeta');
+    const saveStatus = document.getElementById('saveStatus');
+
+    const fields = {
+      skills: document.getElementById('skills'),
+      hiddenTalents: document.getElementById('hiddenTalents'),
+      professionalGoals: document.getElementById('professionalGoals'),
+      motivators: document.getElementById('motivators'),
+      supportNeeds: document.getElementById('supportNeeds'),
+      notes: document.getElementById('notes'),
+      nextSteps: document.getElementById('nextSteps')
+    };
+
+    document.getElementById('addMemberBtn').addEventListener('click', addMember);
+    document.getElementById('saveProfileBtn').addEventListener('click', saveProfile);
+    document.getElementById('deleteMemberBtn').addEventListener('click', deleteMember);
+    document.getElementById('exportBtn').addEventListener('click', exportData);
+    document.getElementById('importBtn').addEventListener('click', () => document.getElementById('importFile').click());
+    document.getElementById('importFile').addEventListener('change', importData);
+    document.getElementById('clearBtn').addEventListener('click', clearAllData);
+
+    render();
+
+    function loadState() {
+      try {
+        return JSON.parse(localStorage.getItem(STORAGE_KEY)) || { members: [], selectedId: null };
+      } catch {
+        return { members: [], selectedId: null };
+      }
+    }
+
+    function persist() {
+      state.selectedId = selectedId;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function makeId() {
+      return 'm_' + Math.random().toString(36).slice(2, 10);
+    }
+
+    function addMember() {
+      const name = document.getElementById('memberName').value.trim();
+      const role = document.getElementById('memberRole').value.trim();
+      const tenure = document.getElementById('memberTenure').value;
+      const start = document.getElementById('memberStart').value;
+
+      if (!name) {
+        alert('Please add a name first.');
+        return;
+      }
+
+      const member = {
+        id: makeId(),
+        name,
+        role,
+        tenure,
+        start,
+        skills: '',
+        hiddenTalents: '',
+        professionalGoals: '',
+        motivators: '',
+        supportNeeds: '',
+        notes: '',
+        nextSteps: ''
+      };
+
+      state.members.push(member);
+      selectedId = member.id;
+      persist();
+      render();
+
+      document.getElementById('memberName').value = '';
+      document.getElementById('memberRole').value = '';
+      document.getElementById('memberStart').value = '';
+      saveStatus.textContent = 'Team member added.';
+    }
+
+    function render() {
+      memberList.innerHTML = '';
+
+      state.members.forEach(member => {
+        const card = document.createElement('div');
+        card.className = 'member-card' + (member.id === selectedId ? ' active' : '');
+        card.innerHTML = `
+          <div><strong>${escapeHtml(member.name)}</strong></div>
+          <div class="muted">${escapeHtml(member.role || 'No role entered')}</div>
+          <div class="tag">${escapeHtml(member.tenure || 'No tenure entered')}</div>
+        `;
+        card.addEventListener('click', () => {
+          selectedId = member.id;
+          persist();
+          render();
+        });
+        memberList.appendChild(card);
+      });
+
+      const member = state.members.find(m => m.id === selectedId);
+
+      if (!member) {
+        emptyState.style.display = 'block';
+        profilePanel.style.display = 'none';
+        return;
+      }
+
+      emptyState.style.display = 'none';
+      profilePanel.style.display = 'block';
+      profileName.textContent = member.name;
+      profileMeta.textContent = [member.role, member.tenure, member.start ? `Start: ${member.start}` : '']
+        .filter(Boolean)
+        .join(' • ');
+
+      Object.keys(fields).forEach(key => {
+        fields[key].value = member[key] || '';
+      });
+    }
+
+    function saveProfile() {
+      const member = state.members.find(m => m.id === selectedId);
+      if (!member) return;
+
+      Object.keys(fields).forEach(key => {
+        member[key] = fields[key].value.trim();
+      });
+
+      persist();
+      saveStatus.textContent = 'Saved.';
+      setTimeout(() => saveStatus.textContent = '', 2000);
+      render();
+    }
+
+    function deleteMember() {
+      const member = state.members.find(m => m.id === selectedId);
+      if (!member) return;
+      const ok = confirm(`Delete ${member.name} from this tracker?`);
+      if (!ok) return;
+
+      state.members = state.members.filter(m => m.id !== selectedId);
+      selectedId = state.members[0]?.id || null;
+      persist();
+      render();
+      saveStatus.textContent = 'Team member deleted.';
+    }
+
+    function exportData() {
+      const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'systems-team-builder-data.json';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function importData(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = e => {
+        try {
+          const imported = JSON.parse(e.target.result);
+          if (!imported.members || !Array.isArray(imported.members)) {
+            throw new Error('Invalid file format');
+          }
+          state = imported;
+          selectedId = state.selectedId || state.members[0]?.id || null;
+          persist();
+          render();
+          saveStatus.textContent = 'Data imported.';
+        } catch {
+          alert('That file could not be imported. Please use a JSON export from this page.');
+        }
+      };
+      reader.readAsText(file);
+      event.target.value = '';
+    }
+
+    function clearAllData() {
+      const ok = confirm('Clear all saved team data from this browser?');
+      if (!ok) return;
+      state = { members: [], selectedId: null };
+      selectedId = null;
+      persist();
+      render();
+      saveStatus.textContent = 'All data cleared.';
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+    }
+  </script>
+</body>
+</html>

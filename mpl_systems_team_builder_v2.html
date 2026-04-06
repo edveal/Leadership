@@ -1,0 +1,1199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MPL Systems Team Hub</title>
+  <style>
+    :root {
+      --navy: #19224D;
+      --green: #004229;
+      --teal: #084D69;
+      --gold: #C6A96B;
+      --bg: #f4f7fb;
+      --panel: #ffffff;
+      --text: #1f2937;
+      --muted: #64748b;
+      --line: #d7dee8;
+      --soft: #eef5f8;
+      --soft-green: #eef7f2;
+      --soft-gold: #faf6ed;
+      --danger: #b42318;
+      --danger-bg: #fef3f2;
+      --shadow: 0 10px 30px rgba(25, 34, 77, 0.08);
+      --radius: 18px;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; font-family: Arial, Helvetica, sans-serif; color: var(--text); background: var(--bg); }
+    body { min-height: 100vh; }
+    button, input, select, textarea { font: inherit; }
+    .container { max-width: 1400px; margin: 0 auto; padding: 0 18px; }
+
+    header {
+      background: linear-gradient(135deg, var(--navy), #25306a 55%, var(--teal));
+      color: white;
+      box-shadow: 0 8px 24px rgba(0,0,0,.14);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    .header-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 18px 0 10px;
+      flex-wrap: wrap;
+    }
+
+    .brand h1 { margin: 0 0 4px; font-size: 1.9rem; }
+    .brand p { margin: 0; opacity: .92; max-width: 850px; }
+
+    .toolbar { display: flex; gap: 10px; flex-wrap: wrap; }
+
+    .topbtn {
+      border: 1px solid rgba(255,255,255,.25);
+      background: rgba(255,255,255,.1);
+      color: white;
+      padding: 10px 14px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    .topbtn:hover { background: rgba(255,255,255,.18); }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      padding: 0 0 14px;
+    }
+
+    .tab {
+      border: 0;
+      background: transparent;
+      color: rgba(255,255,255,.8);
+      padding: 10px 14px;
+      border-radius: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .tab.active { background: rgba(255,255,255,.15); color: white; }
+
+    .view { display: none; padding: 22px 0 36px; }
+    .view.active { display: block; }
+
+    .grid-2 { display: grid; grid-template-columns: 360px 1fr; gap: 16px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+    .stack { display: grid; gap: 16px; }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px;
+    }
+
+    .panel h2, .panel h3 { margin-top: 0; }
+    .muted { color: var(--muted); }
+    .kicker { color: var(--teal); text-transform: uppercase; font-size: .8rem; font-weight: 700; letter-spacing: .06em; }
+
+    .stat {
+      background: linear-gradient(180deg, white, #fbfdff);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 16px;
+    }
+    .stat .n { font-size: 2rem; font-weight: 800; color: var(--navy); }
+    .stat .l { color: var(--muted); font-weight: 700; }
+
+    label { display: block; font-size: .94rem; font-weight: 700; margin-bottom: 6px; color: var(--navy); }
+    input[type="text"], input[type="date"], input[type="month"], select, textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 11px 12px;
+      background: white;
+      color: var(--text);
+      margin-bottom: 12px;
+    }
+    textarea { min-height: 96px; resize: vertical; }
+    .tiny { min-height: 64px; }
+    .tall { min-height: 130px; }
+
+    .btnrow { display: flex; gap: 10px; flex-wrap: wrap; }
+    .btn {
+      border: 0;
+      border-radius: 12px;
+      padding: 10px 14px;
+      cursor: pointer;
+      font-weight: 700;
+    }
+    .btn.primary { background: var(--green); color: white; }
+    .btn.secondary { background: #e8edf4; color: var(--text); }
+    .btn.teal { background: var(--teal); color: white; }
+    .btn.gold { background: var(--soft-gold); color: #775b1b; border: 1px solid #ecdcb7; }
+    .btn.danger { background: var(--danger-bg); color: var(--danger); border: 1px solid #f7c7c0; }
+
+    .member-list { display: grid; gap: 10px; margin-top: 14px; }
+    .member-card {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px;
+      background: #fbfcff;
+      cursor: pointer;
+    }
+    .member-card.active { border-color: var(--teal); background: #eff7fa; }
+    .member-card h4 { margin: 0 0 3px; color: var(--navy); }
+    .chiprow { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border-radius: 999px;
+      padding: 4px 10px;
+      background: #eef2f7;
+      border: 1px solid #dde5ef;
+      font-size: .82rem;
+      font-weight: 700;
+      color: #475569;
+    }
+
+    .subgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .subgrid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+
+    details {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px 14px;
+      background: #fcfdff;
+      margin-bottom: 10px;
+    }
+    summary { cursor: pointer; font-weight: 800; color: var(--navy); }
+    .question-list { margin: 10px 0 0; padding-left: 20px; }
+    .question-list li { margin-bottom: 7px; }
+
+    .template-layout { display: grid; grid-template-columns: 320px 1fr; gap: 16px; }
+    .template-pane, .workspace-pane { min-height: 780px; }
+    .template-nav { display: grid; gap: 10px; max-height: 760px; overflow: auto; padding-right: 4px; }
+    .theme-block { border: 1px solid var(--line); border-radius: 14px; overflow: hidden; background: white; }
+    .theme-title {
+      width: 100%; text-align: left; border: 0; background: #f8fafc; color: var(--navy);
+      padding: 12px 14px; font-weight: 800; cursor: pointer;
+    }
+    .theme-items { display: none; }
+    .theme-items.open { display: block; }
+    .template-item {
+      display: block; width: 100%; text-align: left; border: 0; background: white; border-top: 1px solid #eef2f6;
+      padding: 10px 14px; cursor: pointer; color: var(--text);
+    }
+    .template-item.active { background: #eef7fa; color: var(--green); font-weight: 700; }
+
+    .question-block {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: white;
+      padding: 14px;
+      margin-bottom: 12px;
+    }
+    .question-title { font-weight: 800; color: var(--teal); margin-bottom: 8px; }
+
+    .history-list { display: grid; gap: 12px; }
+    .history-card {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: white;
+      padding: 14px;
+    }
+    .history-card h4 { margin: 0 0 6px; color: var(--navy); }
+
+    table { width: 100%; border-collapse: collapse; }
+    th, td {
+      text-align: left; vertical-align: top; border-bottom: 1px solid var(--line); padding: 10px;
+      font-size: .95rem;
+    }
+    th { color: var(--navy); background: #f8fafc; position: sticky; top: 0; }
+    .table-wrap { max-height: 520px; overflow: auto; border: 1px solid var(--line); border-radius: 14px; }
+
+    .statusline { min-height: 1.2em; color: var(--green); font-weight: 700; }
+    .small { font-size: .88rem; }
+
+    .print-shell { background: white; padding: 24px; }
+    .pillbar { display: flex; gap: 8px; flex-wrap: wrap; }
+    .pill { background: #f1f5f9; border: 1px solid var(--line); border-radius: 999px; padding: 6px 10px; font-size: .84rem; }
+
+    @media (max-width: 1180px) {
+      .grid-4 { grid-template-columns: 1fr 1fr; }
+      .template-layout, .grid-2, .subgrid, .subgrid-3 { grid-template-columns: 1fr; }
+      .template-pane, .workspace-pane { min-height: auto; }
+    }
+    @media (max-width: 760px) {
+      .grid-3, .grid-4 { grid-template-columns: 1fr; }
+      .header-top { align-items: flex-start; }
+    }
+
+    @media print {
+      body { background: white; }
+      header, .noprint { display: none !important; }
+      .view { display: none !important; }
+      #printView.print-active { display: block !important; }
+      #printView { padding: 0; }
+      .panel { box-shadow: none; border: none; padding: 0; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <div class="header-top">
+        <div class="brand">
+          <h1>MPL Systems Team Hub</h1>
+          <p>McKinney-branded team builder for profiles, ongoing 1-on-1s, team comparison, and printable leadership summaries.</p>
+        </div>
+        <div class="toolbar noprint">
+          <button class="topbtn" id="exportAllBtn">Export Data</button>
+          <button class="topbtn" id="importAllBtn">Import Data</button>
+          <button class="topbtn" id="printCurrentBtn">Print Current View</button>
+          <input type="file" id="importFile" accept="application/json" style="display:none;">
+        </div>
+      </div>
+      <div class="tabs noprint">
+        <button class="tab active" data-view="dashboardView">Dashboard</button>
+        <button class="tab" data-view="profilesView">Team Profiles</button>
+        <button class="tab" data-view="oneOnOneView">1-on-1 Workspace</button>
+        <button class="tab" data-view="comparisonView">Comparison</button>
+        <button class="tab" data-view="printView">Print Center</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="view active" id="dashboardView">
+      <div class="grid-4">
+        <div class="stat"><div class="l">Total team members</div><div class="n" id="statMembers">0</div></div>
+        <div class="stat"><div class="l">New to MPL</div><div class="n" id="statNew">0</div></div>
+        <div class="stat"><div class="l">Established at MPL</div><div class="n" id="statEstablished">0</div></div>
+        <div class="stat"><div class="l">Saved 1-on-1s</div><div class="n" id="statMeetings">0</div></div>
+      </div>
+      <div class="grid-2" style="margin-top:16px;">
+        <div class="panel">
+          <div class="kicker">Team setup</div>
+          <h2>Add team member</h2>
+          <label>Name</label>
+          <input id="memberName" type="text" placeholder="Employee name">
+          <label>Role / Title</label>
+          <input id="memberRole" type="text" placeholder="Systems Librarian, Library Tech, Planetarium Manager, etc.">
+          <div class="subgrid">
+            <div>
+              <label>Tenure</label>
+              <select id="memberTenure">
+                <option value="New to MPL">New to MPL</option>
+                <option value="Established at MPL">Established at MPL</option>
+              </select>
+            </div>
+            <div>
+              <label>Start date</label>
+              <input id="memberStart" type="date">
+            </div>
+          </div>
+          <label>Primary focus area</label>
+          <input id="memberFocus" type="text" placeholder="ILS, training, troubleshooting, outreach tech, documentation...">
+          <button class="btn primary" id="addMemberBtn">Add team member</button>
+          <div class="statusline" id="dashboardStatus"></div>
+
+          <hr style="border:none;border-top:1px solid var(--line);margin:16px 0;">
+          <div class="kicker">Quick prompts</div>
+          <h3>Best first-round questions</h3>
+          <div class="pillbar">
+            <span class="pill">What part of the work gives you energy?</span>
+            <span class="pill">What do coworkers already rely on you for?</span>
+            <span class="pill">What do you want to learn here?</span>
+            <span class="pill">What support helps you do your best work?</span>
+            <span class="pill">What should this team be known for?</span>
+          </div>
+        </div>
+
+        <div class="stack">
+          <div class="panel">
+            <div class="kicker">Snapshot</div>
+            <h2>Recent team members</h2>
+            <div id="recentMembers" class="member-list"></div>
+          </div>
+          <div class="panel">
+            <div class="kicker">Leadership lens</div>
+            <h2>What to listen for</h2>
+            <div class="pillbar">
+              <span class="pill">Troubleshooting strength</span>
+              <span class="pill">Training interest</span>
+              <span class="pill">Documentation habit</span>
+              <span class="pill">Customer-service mindset</span>
+              <span class="pill">Leadership interest</span>
+              <span class="pill">Cross-training need</span>
+              <span class="pill">Clearer priorities</span>
+              <span class="pill">Recognition needs</span>
+              <span class="pill">Process improvement</span>
+              <span class="pill">Communication preference</span>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="kicker">Guide</div>
+            <h2>How to use the 1-on-1s well</h2>
+            <p class="muted">A solid rhythm is: rapport, recent work, blockers and support, growth and goals, then concrete next steps. Let the employee do most of the talking and use your notes to spot patterns over time.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="view" id="profilesView">
+      <div class="grid-2">
+        <aside class="panel noprint">
+          <div class="kicker">Filters</div>
+          <h2>Team list</h2>
+          <label>Search name / role / focus</label>
+          <input id="profileSearch" type="text" placeholder="Search profiles">
+          <div class="subgrid">
+            <div>
+              <label>Tenure</label>
+              <select id="profileTenureFilter">
+                <option value="All">All</option>
+                <option value="New to MPL">New to MPL</option>
+                <option value="Established at MPL">Established at MPL</option>
+              </select>
+            </div>
+            <div>
+              <label>Role contains</label>
+              <input id="profileRoleFilter" type="text" placeholder="Optional">
+            </div>
+          </div>
+          <div id="memberList" class="member-list"></div>
+          <div class="btnrow" style="margin-top:12px;">
+            <button class="btn secondary" id="clearProfileFiltersBtn">Clear filters</button>
+          </div>
+        </aside>
+
+        <section class="stack">
+          <div class="panel" id="profileEmpty">
+            <h2>Choose a team member</h2>
+            <p class="muted">Pick someone from the left to track strengths, goals, motivators, and ongoing manager notes.</p>
+          </div>
+
+          <div class="panel" id="profilePanel" style="display:none;">
+            <div style="display:flex;justify-content:space-between;gap:16px;align-items:flex-start;flex-wrap:wrap;">
+              <div>
+                <div class="kicker">Profile</div>
+                <h2 id="profileName">Team member</h2>
+                <p class="muted" id="profileMeta"></p>
+              </div>
+              <div class="btnrow noprint">
+                <button class="btn gold" id="printProfileBtn">Print profile</button>
+                <button class="btn danger" id="deleteMemberBtn">Delete team member</button>
+              </div>
+            </div>
+
+            <div class="subgrid">
+              <div>
+                <label>Current skills / strengths</label>
+                <textarea id="skills"></textarea>
+
+                <label>Hidden talents / underused strengths</label>
+                <textarea id="hiddenTalents"></textarea>
+
+                <label>Professional goals</label>
+                <textarea id="professionalGoals"></textarea>
+
+                <label>Development focus for next 6 months</label>
+                <textarea id="developmentFocus"></textarea>
+              </div>
+              <div>
+                <label>Motivators / what they want from the team</label>
+                <textarea id="motivators"></textarea>
+
+                <label>Support needed from me</label>
+                <textarea id="supportNeeds"></textarea>
+
+                <label>Communication / feedback preferences</label>
+                <textarea id="workStyle"></textarea>
+
+                <label>General notes</label>
+                <textarea id="notes"></textarea>
+              </div>
+            </div>
+            <label>Follow-up commitments / next steps</label>
+            <textarea id="nextSteps" class="tall"></textarea>
+            <div class="btnrow noprint">
+              <button class="btn primary" id="saveProfileBtn">Save profile</button>
+            </div>
+            <div class="statusline" id="profileStatus"></div>
+          </div>
+        </section>
+      </div>
+    </section>
+
+    <section class="view" id="oneOnOneView">
+      <div class="template-layout">
+        <aside class="panel template-pane noprint">
+          <div class="kicker">1-on-1 toolkit</div>
+          <h2>Templates and history</h2>
+          <label>Template search</label>
+          <input id="templateSearch" type="text" placeholder="Search templates or themes">
+          <div id="templateNav" class="template-nav"></div>
+          <hr style="border:none;border-top:1px solid var(--line);margin:16px 0;">
+          <label>Meeting history search</label>
+          <input id="historySearch" type="text" placeholder="Search employee or template">
+          <div id="historyList" class="history-list"></div>
+        </aside>
+
+        <section class="panel workspace-pane">
+          <div id="workspaceWelcome">
+            <div class="kicker">Start a conversation</div>
+            <h2>Ongoing 1-on-1 workspace</h2>
+            <p class="muted">This section blends the original team builder with the structure and template approach from your attached 1-on-1 file. Pick a template, select an employee, and save the summary when you are done. The goal is to support repeat use, not just a first meeting. fileciteturn0file0</p>
+          </div>
+
+          <div id="workspacePanel" style="display:none;">
+            <div class="subgrid">
+              <div>
+                <label>Employee</label>
+                <select id="meetingMember"></select>
+              </div>
+              <div>
+                <label>Meeting date</label>
+                <input id="meetingDate" type="date">
+              </div>
+            </div>
+            <div class="subgrid-3">
+              <div>
+                <label>Template</label>
+                <input id="meetingTemplateName" type="text" readonly>
+              </div>
+              <div>
+                <label>Meeting type</label>
+                <select id="meetingType">
+                  <option>Regular 1-on-1</option>
+                  <option>Check-in</option>
+                  <option>Growth conversation</option>
+                  <option>Performance / feedback</option>
+                  <option>Project deep dive</option>
+                </select>
+              </div>
+              <div>
+                <label>Next 1-on-1 target month</label>
+                <input id="nextMeetingMonth" type="month">
+              </div>
+            </div>
+
+            <div class="question-block" style="background:var(--soft-green);">
+              <div class="question-title">Ongoing manager prep</div>
+              <div class="subgrid">
+                <div>
+                  <label>Wins to recognize</label>
+                  <textarea id="prepWins" class="tiny"></textarea>
+                </div>
+                <div>
+                  <label>Concerns / watch items</label>
+                  <textarea id="prepConcerns" class="tiny"></textarea>
+                </div>
+              </div>
+            </div>
+
+            <div id="questionBlocks"></div>
+
+            <div class="question-block">
+              <div class="question-title">Ongoing 1-on-1 capture</div>
+              <div class="subgrid">
+                <div>
+                  <label>Current morale / energy</label>
+                  <textarea id="morale" class="tiny"></textarea>
+                </div>
+                <div>
+                  <label>Workload / capacity notes</label>
+                  <textarea id="workload" class="tiny"></textarea>
+                </div>
+                <div>
+                  <label>Blockers / friction points</label>
+                  <textarea id="blockers" class="tiny"></textarea>
+                </div>
+                <div>
+                  <label>Training / growth actions</label>
+                  <textarea id="growthActions" class="tiny"></textarea>
+                </div>
+              </div>
+              <label>Employee commitments before next meeting</label>
+              <textarea id="employeeCommitments" class="tiny"></textarea>
+              <label>Manager commitments before next meeting</label>
+              <textarea id="managerCommitments" class="tiny"></textarea>
+            </div>
+
+            <div class="btnrow noprint">
+              <button class="btn teal" id="generateSummaryBtn">Generate summary</button>
+              <button class="btn primary" id="saveMeetingBtn">Save to history</button>
+              <button class="btn gold" id="printMeetingBtn">Print summary</button>
+            </div>
+
+            <div class="panel" style="margin-top:16px;background:#fbfdff;">
+              <div class="kicker">Summary</div>
+              <h3>Review before saving</h3>
+              <pre id="meetingSummary" style="white-space:pre-wrap;font-family:Arial, Helvetica, sans-serif;line-height:1.5;margin:0;"></pre>
+            </div>
+          </div>
+        </section>
+      </div>
+    </section>
+
+    <section class="view" id="comparisonView">
+      <div class="panel noprint">
+        <div class="kicker">Team-wide comparison</div>
+        <h2>Filter the team</h2>
+        <div class="subgrid-3">
+          <div>
+            <label>Search</label>
+            <input id="comparisonSearch" type="text" placeholder="Name, role, goals, strengths...">
+          </div>
+          <div>
+            <label>Tenure</label>
+            <select id="comparisonTenureFilter">
+              <option value="All">All</option>
+              <option value="New to MPL">New to MPL</option>
+              <option value="Established at MPL">Established at MPL</option>
+            </select>
+          </div>
+          <div>
+            <label>Only show members with saved meetings</label>
+            <select id="comparisonMeetingFilter">
+              <option value="All">All</option>
+              <option value="Yes">Yes</option>
+              <option value="No">No</option>
+            </select>
+          </div>
+        </div>
+        <div class="btnrow">
+          <button class="btn secondary" id="clearComparisonFiltersBtn">Clear comparison filters</button>
+          <button class="btn gold" id="printComparisonBtn">Print comparison</button>
+        </div>
+      </div>
+      <div class="panel" style="margin-top:16px;">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Role</th>
+                <th>Tenure</th>
+                <th>Focus area</th>
+                <th>Strengths</th>
+                <th>Goals</th>
+                <th>Development focus</th>
+                <th>Motivators</th>
+                <th>Support needed</th>
+                <th>Saved 1-on-1s</th>
+              </tr>
+            </thead>
+            <tbody id="comparisonBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="view" id="printView">
+      <div class="grid-2 noprint">
+        <div class="panel">
+          <div class="kicker">Print center</div>
+          <h2>Build a printable summary</h2>
+          <label>Print type</label>
+          <select id="printMode">
+            <option value="team">Team snapshot</option>
+            <option value="profile">Single employee profile</option>
+            <option value="meeting">Single 1-on-1 summary</option>
+          </select>
+          <div id="printProfileChooserWrap">
+            <label>Employee</label>
+            <select id="printProfileChooser"></select>
+          </div>
+          <div id="printMeetingChooserWrap" style="display:none;">
+            <label>Saved meeting</label>
+            <select id="printMeetingChooser"></select>
+          </div>
+          <div class="btnrow">
+            <button class="btn teal" id="buildPrintBtn">Build printable view</button>
+            <button class="btn gold" id="printBuiltBtn">Print</button>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="kicker">What this is good for</div>
+          <h2>Useful outputs</h2>
+          <ul class="question-list">
+            <li>A clean one-page employee profile before a coaching conversation</li>
+            <li>A running 1-on-1 summary for monthly supervision files</li>
+            <li>A team comparison snapshot when planning development work</li>
+          </ul>
+        </div>
+      </div>
+      <div class="panel print-shell" style="margin-top:16px;">
+        <div id="printContent">Choose a print mode and build the view.</div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const STORAGE_KEY = 'mpl-systems-team-hub-v2';
+    const today = new Date().toISOString().slice(0,10);
+
+    const templateData = [
+      {
+        themeTitle: 'Foundational Check-ins',
+        templates: [
+          { title: 'Standard Check-in', questions: ['How are you doing, both at work and outside work?', 'What is going well right now?', 'What is getting in the way of your work?', 'How can I best support you before our next meeting?'] },
+          { title: 'Productivity and Work Habits', questions: ['What part of your work routine is helping you most right now?', 'Where are you losing time or energy?', 'What work conditions help you focus?', 'What can I remove, clarify, or improve for you?'] },
+          { title: 'Project Deep Dive and Clarity', questions: ['Which current project needs the most attention right now?', 'What feels clear and what feels muddy?', 'What dependencies or decisions are slowing progress?', 'Where would coaching or backup be useful?'] }
+        ]
+      },
+      {
+        themeTitle: 'Growth and Development',
+        templates: [
+          { title: 'Career Growth and Aspirations', questions: ['What kind of work do you want to do more of here?', 'What long-term direction feels most interesting to you?', 'What skills or experiences would move you closer to that?', 'What is one realistic next step we can support now?'] },
+          { title: 'Skill Development and Learning', questions: ['Where do you feel strongest right now?', 'What do you want to learn next?', 'What training, mentoring, or stretch work would help?', 'Who or what could help you build that skill?'] },
+          { title: 'Identifying Superpowers', questions: ['What kind of work comes naturally to you?', 'What do other people seem to rely on you for?', 'What strength do you want to use more often?', 'How can we better align your role with that strength?'] }
+        ]
+      },
+      {
+        themeTitle: 'Performance and Feedback',
+        templates: [
+          { title: 'Praise and Constructive Feedback', questions: ['What work are you most proud of lately?', 'Where do you feel confident in your performance?', 'Where do you want more feedback or coaching?', 'What support would help you improve further?'] },
+          { title: 'Self-Awareness and Improvement', questions: ['What do you think this role most needs from you?', 'Where do you think you are doing especially well?', 'What situation would you handle differently if you had a do-over?', 'What can I do to help you strengthen the areas you named?'] }
+        ]
+      },
+      {
+        themeTitle: 'Team and MPL Culture',
+        templates: [
+          { title: 'Team Dynamics and Collaboration', questions: ['How is teamwork feeling right now?', 'Where are handoffs or communication working well?', 'Where do you experience friction with process or coordination?', 'How can this team better support staff and patrons together?'] },
+          { title: 'Big Picture and Improvement', questions: ['What does MPL do especially well that we should protect?', 'What is one thing that would make work here better?', 'What should the Systems Team be known for?', 'Where do you want more clarity, inclusion, or communication?'] },
+          { title: 'Innovation and Ideas', questions: ['What is one improvement idea you keep noticing?', 'What is a small experiment worth trying?', 'What gets in the way of acting on good ideas?', 'How can I help move one idea forward?'] }
+        ]
+      },
+      {
+        themeTitle: 'Well-being and Job Satisfaction',
+        templates: [
+          { title: 'Motivation and Purpose', questions: ['What parts of the work feel most meaningful to you?', 'When do you feel most energized here?', 'What tends to drain you?', 'What could help make the work feel more sustainable or rewarding?'] },
+          { title: 'Workload and Balance', questions: ['How is your workload feeling right now?', 'Where are you stretched thin, and where do you still have capacity?', 'What change would make your week more manageable?', 'What can I do as your manager to make the work easier to navigate?'] },
+          { title: 'Role Alignment and Satisfaction', questions: ['How closely does your current work match what you expected?', 'Which parts of the role fit you best?', 'Which parts feel off or frustrating?', 'What would help make the role feel better aligned?'] }
+        ]
+      },
+      {
+        themeTitle: 'Early Team Builder Questions',
+        templates: [
+          { title: 'Skills, Talents, and Goals', questions: ['What part of the work comes most naturally to you?', 'What talents do you have that may be underused here?', 'What do you want to get out of this team and MPL more broadly?', 'What professional goals do you want us to help support?'] },
+          { title: 'Team Identity Conversation', questions: ['What should this new Systems Team be known for?', 'What should staff experience when they work with us?', 'What is one strength you could teach the rest of the team?', 'What team norm would help us work well together from the start?'] }
+        ]
+      }
+    ];
+
+    let state = loadState();
+    let selectedMemberId = state.selectedMemberId || null;
+    let selectedTemplate = null;
+    let selectedHistoryId = null;
+
+    const tabs = document.querySelectorAll('.tab');
+    const views = document.querySelectorAll('.view');
+
+    const profileFields = ['skills','hiddenTalents','professionalGoals','developmentFocus','motivators','supportNeeds','workStyle','notes','nextSteps'];
+
+    tabs.forEach(tab => tab.addEventListener('click', () => {
+      tabs.forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      views.forEach(v => v.classList.remove('active'));
+      document.getElementById(tab.dataset.view).classList.add('active');
+      if (tab.dataset.view === 'comparisonView') renderComparison();
+      if (tab.dataset.view === 'printView') renderPrintSelectors();
+    }));
+
+    document.getElementById('memberStart').value = today;
+    document.getElementById('meetingDate').value = today;
+
+    document.getElementById('addMemberBtn').addEventListener('click', addMember);
+    document.getElementById('saveProfileBtn').addEventListener('click', saveProfile);
+    document.getElementById('deleteMemberBtn').addEventListener('click', deleteSelectedMember);
+    document.getElementById('printProfileBtn').addEventListener('click', () => { buildPrintContent('profile'); goPrintView(); });
+
+    document.getElementById('profileSearch').addEventListener('input', renderMemberList);
+    document.getElementById('profileTenureFilter').addEventListener('change', renderMemberList);
+    document.getElementById('profileRoleFilter').addEventListener('input', renderMemberList);
+    document.getElementById('clearProfileFiltersBtn').addEventListener('click', () => {
+      document.getElementById('profileSearch').value = '';
+      document.getElementById('profileTenureFilter').value = 'All';
+      document.getElementById('profileRoleFilter').value = '';
+      renderMemberList();
+    });
+
+    document.getElementById('templateSearch').addEventListener('input', renderTemplateNav);
+    document.getElementById('historySearch').addEventListener('input', renderMeetingHistory);
+    document.getElementById('generateSummaryBtn').addEventListener('click', generateMeetingSummary);
+    document.getElementById('saveMeetingBtn').addEventListener('click', saveMeeting);
+    document.getElementById('printMeetingBtn').addEventListener('click', () => { generateMeetingSummary(); buildPrintContent('meeting'); goPrintView(); });
+
+    document.getElementById('comparisonSearch').addEventListener('input', renderComparison);
+    document.getElementById('comparisonTenureFilter').addEventListener('change', renderComparison);
+    document.getElementById('comparisonMeetingFilter').addEventListener('change', renderComparison);
+    document.getElementById('clearComparisonFiltersBtn').addEventListener('click', () => {
+      document.getElementById('comparisonSearch').value = '';
+      document.getElementById('comparisonTenureFilter').value = 'All';
+      document.getElementById('comparisonMeetingFilter').value = 'All';
+      renderComparison();
+    });
+    document.getElementById('printComparisonBtn').addEventListener('click', () => { buildPrintContent('team'); goPrintView(); });
+
+    document.getElementById('exportAllBtn').addEventListener('click', exportData);
+    document.getElementById('importAllBtn').addEventListener('click', () => document.getElementById('importFile').click());
+    document.getElementById('importFile').addEventListener('change', importData);
+    document.getElementById('printCurrentBtn').addEventListener('click', () => window.print());
+
+    document.getElementById('printMode').addEventListener('change', togglePrintChooserVisibility);
+    document.getElementById('buildPrintBtn').addEventListener('click', () => buildPrintContent(document.getElementById('printMode').value));
+    document.getElementById('printBuiltBtn').addEventListener('click', () => window.print());
+
+    function loadState() {
+      try {
+        const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY));
+        if (parsed) return parsed;
+      } catch (e) {}
+      return { members: [], meetings: [], selectedMemberId: null };
+    }
+
+    function persist() {
+      state.selectedMemberId = selectedMemberId;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      renderAll();
+    }
+
+    function makeId(prefix='id') {
+      return prefix + '_' + Math.random().toString(36).slice(2,10);
+    }
+
+    function addMember() {
+      const name = val('memberName');
+      if (!name) return flash('dashboardStatus', 'Please enter a team member name.');
+      const member = {
+        id: makeId('m'),
+        name,
+        role: val('memberRole'),
+        tenure: document.getElementById('memberTenure').value,
+        start: document.getElementById('memberStart').value,
+        focusArea: val('memberFocus'),
+        skills: '', hiddenTalents: '', professionalGoals: '', developmentFocus: '', motivators: '', supportNeeds: '', workStyle: '', notes: '', nextSteps: ''
+      };
+      state.members.push(member);
+      selectedMemberId = member.id;
+      ['memberName','memberRole','memberFocus'].forEach(id => document.getElementById(id).value = '');
+      document.getElementById('memberStart').value = today;
+      persist();
+      flash('dashboardStatus', 'Team member added.');
+    }
+
+    function renderAll() {
+      renderStats();
+      renderRecentMembers();
+      renderMemberList();
+      renderSelectedProfile();
+      renderTemplateNav();
+      renderMeetingMemberSelect();
+      renderMeetingHistory();
+      renderComparison();
+      renderPrintSelectors();
+    }
+
+    function renderStats() {
+      document.getElementById('statMembers').textContent = state.members.length;
+      document.getElementById('statNew').textContent = state.members.filter(m => m.tenure === 'New to MPL').length;
+      document.getElementById('statEstablished').textContent = state.members.filter(m => m.tenure === 'Established at MPL').length;
+      document.getElementById('statMeetings').textContent = state.meetings.length;
+    }
+
+    function renderRecentMembers() {
+      const wrap = document.getElementById('recentMembers');
+      wrap.innerHTML = '';
+      if (!state.members.length) {
+        wrap.innerHTML = '<div class="muted">No team members added yet.</div>';
+        return;
+      }
+      [...state.members].slice(-4).reverse().forEach(m => wrap.appendChild(memberCardEl(m, false)));
+    }
+
+    function filteredMembersForProfiles() {
+      const q = document.getElementById('profileSearch').value.trim().toLowerCase();
+      const tenure = document.getElementById('profileTenureFilter').value;
+      const role = document.getElementById('profileRoleFilter').value.trim().toLowerCase();
+      return state.members.filter(m => {
+        if (tenure !== 'All' && m.tenure !== tenure) return false;
+        if (role && !(m.role || '').toLowerCase().includes(role)) return false;
+        const hay = [m.name,m.role,m.focusArea,m.skills,m.professionalGoals,m.motivators].join(' ').toLowerCase();
+        if (q && !hay.includes(q)) return false;
+        return true;
+      });
+    }
+
+    function memberCardEl(member, clickable=true) {
+      const div = document.createElement('div');
+      div.className = 'member-card' + (member.id === selectedMemberId ? ' active' : '');
+      div.innerHTML = `<h4>${escapeHtml(member.name)}</h4>
+        <div class="muted small">${escapeHtml(member.role || 'No role entered')}</div>
+        <div class="chiprow">
+          <span class="chip">${escapeHtml(member.tenure)}</span>
+          ${member.focusArea ? `<span class="chip">${escapeHtml(member.focusArea)}</span>` : ''}
+        </div>`;
+      if (clickable) div.addEventListener('click', () => { selectedMemberId = member.id; persist(); });
+      return div;
+    }
+
+    function renderMemberList() {
+      const wrap = document.getElementById('memberList');
+      wrap.innerHTML = '';
+      const results = filteredMembersForProfiles();
+      if (!results.length) {
+        wrap.innerHTML = '<div class="muted">No matching team members.</div>';
+        return;
+      }
+      results.forEach(m => wrap.appendChild(memberCardEl(m, true)));
+    }
+
+    function getSelectedMember() {
+      return state.members.find(m => m.id === selectedMemberId) || null;
+    }
+
+    function renderSelectedProfile() {
+      const m = getSelectedMember();
+      document.getElementById('profileEmpty').style.display = m ? 'none' : 'block';
+      document.getElementById('profilePanel').style.display = m ? 'block' : 'none';
+      if (!m) return;
+      document.getElementById('profileName').textContent = m.name;
+      document.getElementById('profileMeta').textContent = [m.role, m.tenure, m.start ? `Start: ${m.start}` : '', m.focusArea ? `Focus: ${m.focusArea}` : ''].filter(Boolean).join(' • ');
+      profileFields.forEach(id => document.getElementById(id).value = m[id] || '');
+    }
+
+    function saveProfile() {
+      const m = getSelectedMember();
+      if (!m) return;
+      profileFields.forEach(id => m[id] = document.getElementById(id).value.trim());
+      persist();
+      flash('profileStatus', 'Profile saved.');
+    }
+
+    function deleteSelectedMember() {
+      const m = getSelectedMember();
+      if (!m) return;
+      if (!confirm(`Delete ${m.name} and any linked context you are tracking here?`)) return;
+      state.members = state.members.filter(x => x.id !== m.id);
+      state.meetings = state.meetings.filter(x => x.memberId !== m.id);
+      selectedMemberId = state.members[0]?.id || null;
+      persist();
+    }
+
+    function renderTemplateNav() {
+      const q = document.getElementById('templateSearch').value.trim().toLowerCase();
+      const nav = document.getElementById('templateNav');
+      nav.innerHTML = '';
+      templateData.forEach((theme, ti) => {
+        const matchesTheme = theme.themeTitle.toLowerCase().includes(q);
+        const matchingTemplates = theme.templates.filter(t => matchesTheme || !q || (t.title + ' ' + t.questions.join(' ')).toLowerCase().includes(q));
+        if (!matchingTemplates.length) return;
+        const block = document.createElement('div');
+        block.className = 'theme-block';
+        const title = document.createElement('button');
+        title.className = 'theme-title';
+        title.textContent = theme.themeTitle;
+        const items = document.createElement('div');
+        items.className = 'theme-items open';
+        title.addEventListener('click', () => items.classList.toggle('open'));
+        matchingTemplates.forEach((temp, i) => {
+          const btn = document.createElement('button');
+          btn.className = 'template-item' + (selectedTemplate && selectedTemplate.themeIndex === ti && selectedTemplate.templateIndex === i ? ' active' : '');
+          btn.textContent = temp.title;
+          btn.addEventListener('click', () => selectTemplate(ti, theme.templates.indexOf(temp)));
+          items.appendChild(btn);
+        });
+        block.appendChild(title);
+        block.appendChild(items);
+        nav.appendChild(block);
+      });
+      if (!nav.innerHTML) nav.innerHTML = '<div class="muted">No matching templates.</div>';
+    }
+
+    function selectTemplate(themeIndex, templateIndex) {
+      selectedTemplate = { themeIndex, templateIndex };
+      const template = templateData[themeIndex].templates[templateIndex];
+      document.getElementById('workspaceWelcome').style.display = 'none';
+      document.getElementById('workspacePanel').style.display = 'block';
+      document.getElementById('meetingTemplateName').value = template.title;
+      const wrap = document.getElementById('questionBlocks');
+      wrap.innerHTML = '';
+      template.questions.forEach((q, idx) => {
+        const block = document.createElement('div');
+        block.className = 'question-block';
+        block.innerHTML = `<div class="question-title">Prompt ${idx+1}</div>
+          <div style="font-weight:700;margin-bottom:8px;">${escapeHtml(q)}</div>
+          <textarea class="meetingAnswer" data-question="${escapeAttr(q)}" placeholder="Type notes here..."></textarea>`;
+        wrap.appendChild(block);
+      });
+      renderTemplateNav();
+      generateMeetingSummary();
+    }
+
+    function renderMeetingMemberSelect() {
+      const sel = document.getElementById('meetingMember');
+      const printProfile = document.getElementById('printProfileChooser');
+      sel.innerHTML = '';
+      printProfile.innerHTML = '';
+      state.members.forEach(m => {
+        const o1 = new Option(m.name, m.id);
+        const o2 = new Option(m.name, m.id);
+        sel.add(o1);
+        printProfile.add(o2);
+      });
+      if (selectedMemberId) {
+        sel.value = selectedMemberId;
+        if ([...printProfile.options].some(o => o.value === selectedMemberId)) printProfile.value = selectedMemberId;
+      }
+      sel.onchange = () => { selectedMemberId = sel.value; persist(); };
+    }
+
+    function generateMeetingSummary() {
+      const templateName = document.getElementById('meetingTemplateName').value || 'Template not selected';
+      const member = state.members.find(m => m.id === document.getElementById('meetingMember').value);
+      const memberName = member ? member.name : 'No employee selected';
+      const answers = [...document.querySelectorAll('.meetingAnswer')].map(el => ({ question: el.dataset.question, answer: el.value.trim() }));
+      let text = `MPL Systems Team 1-on-1 Summary\n`;
+      text += `Employee: ${memberName}\n`;
+      text += `Date: ${document.getElementById('meetingDate').value || ''}\n`;
+      text += `Template: ${templateName}\n`;
+      text += `Meeting Type: ${document.getElementById('meetingType').value}\n`;
+      text += `Next 1-on-1 Target: ${document.getElementById('nextMeetingMonth').value || ''}\n\n`;
+      text += `Wins to recognize:\n${document.getElementById('prepWins').value.trim() || '-'}\n\n`;
+      text += `Concerns / watch items:\n${document.getElementById('prepConcerns').value.trim() || '-'}\n\n`;
+      answers.forEach((item, idx) => {
+        text += `Prompt ${idx+1}: ${item.question}\n${item.answer || '-'}\n\n`;
+      });
+      text += `Current morale / energy:\n${document.getElementById('morale').value.trim() || '-'}\n\n`;
+      text += `Workload / capacity:\n${document.getElementById('workload').value.trim() || '-'}\n\n`;
+      text += `Blockers / friction points:\n${document.getElementById('blockers').value.trim() || '-'}\n\n`;
+      text += `Training / growth actions:\n${document.getElementById('growthActions').value.trim() || '-'}\n\n`;
+      text += `Employee commitments:\n${document.getElementById('employeeCommitments').value.trim() || '-'}\n\n`;
+      text += `Manager commitments:\n${document.getElementById('managerCommitments').value.trim() || '-'}\n`;
+      document.getElementById('meetingSummary').textContent = text;
+      return { text, answers, memberName, templateName };
+    }
+
+    function saveMeeting() {
+      if (!selectedTemplate) return alert('Choose a template first.');
+      const memberId = document.getElementById('meetingMember').value;
+      if (!memberId) return alert('Choose an employee first.');
+      const summary = generateMeetingSummary();
+      const record = {
+        id: makeId('meet'),
+        memberId,
+        employeeName: summary.memberName,
+        date: document.getElementById('meetingDate').value || today,
+        template: summary.templateName,
+        meetingType: document.getElementById('meetingType').value,
+        nextMeetingMonth: document.getElementById('nextMeetingMonth').value,
+        prepWins: document.getElementById('prepWins').value.trim(),
+        prepConcerns: document.getElementById('prepConcerns').value.trim(),
+        morale: document.getElementById('morale').value.trim(),
+        workload: document.getElementById('workload').value.trim(),
+        blockers: document.getElementById('blockers').value.trim(),
+        growthActions: document.getElementById('growthActions').value.trim(),
+        employeeCommitments: document.getElementById('employeeCommitments').value.trim(),
+        managerCommitments: document.getElementById('managerCommitments').value.trim(),
+        answers: summary.answers,
+        summary: summary.text
+      };
+      state.meetings.unshift(record);
+      selectedHistoryId = record.id;
+      persist();
+      alert('1-on-1 saved to history.');
+    }
+
+    function renderMeetingHistory() {
+      const q = document.getElementById('historySearch').value.trim().toLowerCase();
+      const wrap = document.getElementById('historyList');
+      wrap.innerHTML = '';
+      const filtered = state.meetings.filter(m => [m.employeeName, m.template, m.meetingType, m.summary].join(' ').toLowerCase().includes(q));
+      if (!filtered.length) {
+        wrap.innerHTML = '<div class="muted">No saved 1-on-1s yet.</div>';
+        renderPrintMeetingChooser([]);
+        return;
+      }
+      filtered.slice(0, 18).forEach(m => {
+        const div = document.createElement('div');
+        div.className = 'history-card';
+        div.innerHTML = `<h4>${escapeHtml(m.employeeName)}</h4>
+          <div class="small muted">${escapeHtml(m.date)} • ${escapeHtml(m.template)}</div>
+          <div class="btnrow" style="margin-top:10px;">
+            <button class="btn secondary" data-action="view">View</button>
+            <button class="btn gold" data-action="print">Print</button>
+            <button class="btn danger" data-action="delete">Delete</button>
+          </div>`;
+        div.querySelector('[data-action="view"]').addEventListener('click', () => { selectedHistoryId = m.id; document.getElementById('meetingSummary').textContent = m.summary; });
+        div.querySelector('[data-action="print"]').addEventListener('click', () => { selectedHistoryId = m.id; buildPrintContent('meeting'); goPrintView(); });
+        div.querySelector('[data-action="delete"]').addEventListener('click', () => {
+          if (!confirm('Delete this saved 1-on-1?')) return;
+          state.meetings = state.meetings.filter(x => x.id !== m.id);
+          if (selectedHistoryId === m.id) selectedHistoryId = null;
+          persist();
+        });
+        wrap.appendChild(div);
+      });
+      renderPrintMeetingChooser(state.meetings);
+    }
+
+    function renderComparison() {
+      const q = document.getElementById('comparisonSearch').value.trim().toLowerCase();
+      const tenure = document.getElementById('comparisonTenureFilter').value;
+      const meetingFilter = document.getElementById('comparisonMeetingFilter').value;
+      const body = document.getElementById('comparisonBody');
+      body.innerHTML = '';
+      const filtered = state.members.filter(m => {
+        const meetingCount = state.meetings.filter(x => x.memberId === m.id).length;
+        if (tenure !== 'All' && m.tenure !== tenure) return false;
+        if (meetingFilter === 'Yes' && meetingCount === 0) return false;
+        if (meetingFilter === 'No' && meetingCount > 0) return false;
+        const hay = [m.name,m.role,m.focusArea,m.skills,m.professionalGoals,m.developmentFocus,m.motivators,m.supportNeeds].join(' ').toLowerCase();
+        if (q && !hay.includes(q)) return false;
+        return true;
+      });
+      if (!filtered.length) {
+        body.innerHTML = '<tr><td colspan="10" class="muted">No matching team members.</td></tr>';
+        return;
+      }
+      filtered.forEach(m => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${escapeHtml(m.name)}</td>
+          <td>${escapeHtml(m.role || '')}</td>
+          <td>${escapeHtml(m.tenure || '')}</td>
+          <td>${escapeHtml(m.focusArea || '')}</td>
+          <td>${escapeHtml(shorten(m.skills))}</td>
+          <td>${escapeHtml(shorten(m.professionalGoals))}</td>
+          <td>${escapeHtml(shorten(m.developmentFocus))}</td>
+          <td>${escapeHtml(shorten(m.motivators))}</td>
+          <td>${escapeHtml(shorten(m.supportNeeds))}</td>
+          <td>${state.meetings.filter(x => x.memberId === m.id).length}</td>`;
+        body.appendChild(tr);
+      });
+    }
+
+    function togglePrintChooserVisibility() {
+      const mode = document.getElementById('printMode').value;
+      document.getElementById('printProfileChooserWrap').style.display = mode === 'profile' ? 'block' : (mode === 'team' ? 'none' : 'block');
+      document.getElementById('printMeetingChooserWrap').style.display = mode === 'meeting' ? 'block' : 'none';
+    }
+
+    function renderPrintSelectors() {
+      renderMeetingMemberSelect();
+      renderPrintMeetingChooser(state.meetings);
+      togglePrintChooserVisibility();
+    }
+
+    function renderPrintMeetingChooser(meetings) {
+      const sel = document.getElementById('printMeetingChooser');
+      sel.innerHTML = '';
+      meetings.forEach(m => sel.add(new Option(`${m.employeeName} — ${m.date} — ${m.template}`, m.id)));
+      if (selectedHistoryId && [...sel.options].some(o => o.value === selectedHistoryId)) sel.value = selectedHistoryId;
+    }
+
+    function buildPrintContent(mode) {
+      const wrap = document.getElementById('printContent');
+      const chosenMode = mode || document.getElementById('printMode').value;
+      if (chosenMode === 'team') {
+        let html = `<h2 style="color:var(--navy);margin-top:0;">MPL Systems Team Snapshot</h2>`;
+        html += `<p class="muted">Generated ${today}. Team members: ${state.members.length}. Saved 1-on-1s: ${state.meetings.length}.</p>`;
+        html += '<table><thead><tr><th>Name</th><th>Role</th><th>Tenure</th><th>Focus</th><th>Goals</th><th>Support needed</th></tr></thead><tbody>';
+        state.members.forEach(m => {
+          html += `<tr><td>${escapeHtml(m.name)}</td><td>${escapeHtml(m.role || '')}</td><td>${escapeHtml(m.tenure || '')}</td><td>${escapeHtml(m.focusArea || '')}</td><td>${escapeHtml(m.professionalGoals || '')}</td><td>${escapeHtml(m.supportNeeds || '')}</td></tr>`;
+        });
+        html += '</tbody></table>';
+        wrap.innerHTML = html;
+      } else if (chosenMode === 'profile') {
+        const memberId = document.getElementById('printProfileChooser').value || selectedMemberId;
+        const m = state.members.find(x => x.id === memberId);
+        if (!m) { wrap.textContent = 'No employee selected.'; return; }
+        wrap.innerHTML = renderProfileHtml(m);
+      } else {
+        const meetingId = document.getElementById('printMeetingChooser').value || selectedHistoryId;
+        const mtg = state.meetings.find(x => x.id === meetingId);
+        if (!mtg) {
+          const preview = document.getElementById('meetingSummary').textContent.trim();
+          wrap.innerHTML = `<h2 style="color:var(--navy);margin-top:0;">Current 1-on-1 Summary</h2><pre style="white-space:pre-wrap;font-family:Arial, Helvetica, sans-serif;line-height:1.5;">${escapeHtml(preview || 'No current summary available.')}</pre>`;
+          return;
+        }
+        wrap.innerHTML = `<h2 style="color:var(--navy);margin-top:0;">MPL Systems Team 1-on-1 Summary</h2><pre style="white-space:pre-wrap;font-family:Arial, Helvetica, sans-serif;line-height:1.5;">${escapeHtml(mtg.summary)}</pre>`;
+      }
+    }
+
+    function renderProfileHtml(m) {
+      const count = state.meetings.filter(x => x.memberId === m.id).length;
+      return `
+        <h2 style="color:var(--navy);margin-top:0;">${escapeHtml(m.name)}</h2>
+        <p class="muted">${escapeHtml([m.role, m.tenure, m.start ? `Start: ${m.start}` : '', m.focusArea ? `Focus: ${m.focusArea}` : ''].filter(Boolean).join(' • '))}</p>
+        <p><strong>Saved 1-on-1s:</strong> ${count}</p>
+        <h3>Strengths</h3><p>${escapeHtml(m.skills || '')}</p>
+        <h3>Hidden talents</h3><p>${escapeHtml(m.hiddenTalents || '')}</p>
+        <h3>Professional goals</h3><p>${escapeHtml(m.professionalGoals || '')}</p>
+        <h3>Development focus</h3><p>${escapeHtml(m.developmentFocus || '')}</p>
+        <h3>Motivators</h3><p>${escapeHtml(m.motivators || '')}</p>
+        <h3>Support needed</h3><p>${escapeHtml(m.supportNeeds || '')}</p>
+        <h3>Communication / feedback preferences</h3><p>${escapeHtml(m.workStyle || '')}</p>
+        <h3>General notes</h3><p>${escapeHtml(m.notes || '')}</p>
+        <h3>Next steps</h3><p>${escapeHtml(m.nextSteps || '')}</p>`;
+    }
+
+    function goPrintView() {
+      tabs.forEach(t => t.classList.remove('active'));
+      document.querySelector('.tab[data-view="printView"]').classList.add('active');
+      views.forEach(v => v.classList.remove('active'));
+      document.getElementById('printView').classList.add('active');
+      renderPrintSelectors();
+    }
+
+    function exportData() {
+      const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'mpl_systems_team_hub_data.json';
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }
+
+    function importData(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = evt => {
+        try {
+          const parsed = JSON.parse(evt.target.result);
+          if (!parsed.members || !parsed.meetings) throw new Error('bad');
+          state = parsed;
+          selectedMemberId = state.selectedMemberId || state.members[0]?.id || null;
+          persist();
+        } catch(err) {
+          alert('That file could not be imported. Use a JSON export from this page.');
+        }
+      };
+      reader.readAsText(file);
+      e.target.value = '';
+    }
+
+    function val(id) { return document.getElementById(id).value.trim(); }
+    function flash(id, msg) { const el = document.getElementById(id); el.textContent = msg; setTimeout(() => { if (el.textContent === msg) el.textContent = ''; }, 2500); }
+    function shorten(s) { s = s || ''; return s.length > 110 ? s.slice(0,107) + '...' : s; }
+    function escapeHtml(str) { return String(str ?? '').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'", '&#39;'); }
+    function escapeAttr(str) { return escapeHtml(str); }
+
+    renderAll();
+    buildPrintContent('team');
+  </script>
+</body>
+</html>
